@@ -1,50 +1,37 @@
 <?php
 /*
- * Plugin Name: wdtax
- * Plugin URI: 
+ * Plugin Name: Wikidata Taxonomies
+ * Plugin URI: https://github.com/philbarker/wdtax
  * Description: Wikidata enhanced taxonomies for linked data indexes in WordPress
  * Version: 0
  * Author: Phil Barker
  * Author URI: http://people.pjjk.net/phil
  * @license GPL 2.0+
  */
- 
+
 defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
 
 $wdtax_dir = plugin_dir_path( __FILE__ );
-include_once( $wdtax_dir.'inc/taxonomy_functions.php' );
+include_once( $wdtax_dir.'inc/taxonomy_class.php' );
 include_once( $wdtax_dir.'inc/wikidata_functions.php' );
 
-//these functions could plausibly go in the theme, so as to make the plugin less 
-//omniana specific.
-function wdtax_add_admin_menu() {
-	$page_title = 'Taxonomies';
-	$menu_title = 'Taxonomies';
-	$capability = 'post';
-	$menu_slug  = 'wdtax_taxonomies';
-	$function   = 'wdtax_display_admin_page';
-	              // Callback function which displays the page content.
-	$icon_url   = 'dashicons-admin-page';
-	$position   = 10;
-	add_menu_page( $page_title, $menu_title, $capability, 
-	               $menu_slug, $function, $icon_url, $position );
-	add_submenu_page( $menu_slug, $menu_title, $menu_title, $capability,
-	               $menu_slug, $function);
-}
-add_action( 'admin_menu', 'wdtax_add_admin_menu', 1 );
 
-function wdtax_register_taxonomies() {
-	wdtax_register_taxonomy('wdtax_people', 'chapter', 'person', 'people');
-	wdtax_register_taxonomy('wdtax_places', 'chapter', 'place', 'places');
-	wdtax_register_taxonomy('wdtax_events', 'chapter', 'event', 'events');
-	wdtax_register_taxonomy('wdtax_works', 'chapter', 'work', 'works');
-}
-add_action( 'init', 'wdtax_register_taxonomies');
+$wd_about_taxonomy = new wdtax_taxonomy('wdtax_about',
+	                             'post',
+															 'About Term',
+															 'About Terms');
+$wd_about_taxonomy->init(); //registers methods with init hook
+$wd_about_taxonomy->admin_init(); //registers methods with admin_init hook
 
-function wdtax_people_edit_form_fields( $term, $taxonomy ) {
+//	wdtax_register_taxonomy('wdtax_places', 'chapter', 'place', 'places');
+//	wdtax_register_taxonomy('wdtax_events', 'chapter', 'event', 'events');
+//	wdtax_register_taxonomy('wdtax_works', 'chapter', 'work', 'works');
+
+/*
+function wdtax_about_edit_form_fields( $term, $taxonomy ) {
     $wd_id = ucfirst( get_term_meta( $term->term_id, 'wd_id', true ) );
-    $wd_name = get_term_meta( $term->term_id, 'wd_name', true ); 
-    $wd_description = get_term_meta( $term->term_id, 'wd_description', true ); 
+    $wd_name = get_term_meta( $term->term_id, 'wd_name', true );
+    $wd_description = get_term_meta( $term->term_id, 'wd_description', true );
     $wd_birth_year  = get_term_meta( $term->term_id, 'wd_birth_year', true );
     $wd_birth_place  = get_term_meta( $term->term_id, 'wd_birth_place', true );
     $wd_birth_country = get_term_meta( $term->term_id, 'wd_birth_country', true );
@@ -77,7 +64,7 @@ function wdtax_people_edit_form_fields( $term, $taxonomy ) {
 
     <?php
 }
-add_action( 'wdtax_people_edit_form_fields', 'wdtax_people_edit_form_fields', 20, 2 );
+add_action( 'wdtax_about_edit_form_fields', 'wdtax_about_edit_form_fields', 20, 2 );
 
 function wdtax_get_person_wikidata( $term ) {
 	$term_id = $term->term_id;
@@ -95,4 +82,4 @@ function wdtax_get_person_wikidata( $term ) {
 	$person_wd->store_property( 'cod', 'wd_death_country' );
 }
 add_action( 'wdtax_people_pre_edit_form', 'wdtax_get_person_wikidata' );
-
+*/
