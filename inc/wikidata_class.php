@@ -26,6 +26,7 @@ abstract class wdtax_wikidata {
 	protected $term_id;
 	protected $label;
 	protected $description;
+	protected $properties;
 	protected $wikidata;
 	protected $endpointUrl = 'https://query.wikidata.org/sparql';
 	protected $sparqlQuery = '';
@@ -37,6 +38,7 @@ abstract class wdtax_wikidata {
 		$this->fetch_wikidata();
 		$this->set_text_property( 'label' );
 		$this->set_text_property( 'description' );
+		$this->properties = array();
 	}
 	protected function set_id( $new_id ) {
 		$this->id = $new_id;
@@ -55,7 +57,7 @@ abstract class wdtax_wikidata {
 			);
 		wp_update_term( $this->term_id, $this->taxonomy, $args );
 	}
-	function get_property( $p, $type ) {
+	function set_property( $p, $type ) {
 		if ('Year'===$type) {
 			$this->set_year_property( $p );
 		} elseif ('Label'===$type) {
