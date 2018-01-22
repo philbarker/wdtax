@@ -130,4 +130,9 @@ class wdtax_taxonomy {
           );
       }
   }
+  function get_basic_wikidata( $term ) {
+  	$term_id = $term->term_id;
+    $wd_id = ucfirst( get_term_meta( $term_id, 'wd_id', true ) );
+   	$args = array();
+  }
 }
