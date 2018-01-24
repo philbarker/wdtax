@@ -10,31 +10,29 @@
 defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
 
 abstract class wdtax_wikidata {
-// cannot be instantiated except when extended to define 
-// $sparqlQuery & $taxonomy
+	/* cannot be instantiated except when extended to define
+	 * $sparqlQuery
+	 *
+	 * method naming:
+	 * fetch_ data from wikidata
+	 * set_ value from wikidata as property
+	 * get_ value of a property
+	 * store_ value of property as metadata
+	 !!maybe the store_ methods ought to be in the taxonomy class.
+	 *
+	 * wikidate is fetched and properties set on initiation
+	 * properties need to be stored explicitly
+	 */
+	public $id;
+	public $label;
+	public $description;
+//	public $properties; //not used? object properties set w/o declaring property
+	public $wikidata;
+	public $endpointUrl = 'https://query.wikidata.org/sparql';
+	public $sparqlQuery = '';
 
-// method naming:
-// fetch_ data from wikidata
-// set_ value from wikidata as property
-// get_ value of a property
-// store_ value of property as metadata
-
-// wikidate is fetched and properties set on initiation
-// properties need to be stored explicitly
- 
-	protected $id;
-	protected $term_id;
-	protected $label;
-	protected $description;
-	protected $properties;
-	protected $wikidata;
-	protected $endpointUrl = 'https://query.wikidata.org/sparql';
-	protected $sparqlQuery = '';
-	protected $taxonomy = '';
-
-	public function __construct( $wd_id, $term_id ) {
+	public function __construct( $wd_id ) {
 		$this->set_id( $wd_id );
-		$this->term_id = $term_id;
 		$this->fetch_wikidata();
 		$this->set_text_property( 'label' );
 		$this->set_text_property( 'description' );
@@ -50,12 +48,12 @@ abstract class wdtax_wikidata {
 			return false;
 		}
 	}
-	function store_term_data( ) {
+	function store_term_data( $term_id, $taxonomy ) {
 		$args = array(
 				'description' => $this->description,
 				'name' => $this->label
 			);
-		wp_update_term( $this->term_id, $this->taxonomy, $args );
+		wp_update_term( $term_id, $taxonomy, $args );
 	}
 	function set_property( $p, $type ) {
 		if ('Year'===$type) {
@@ -65,10 +63,10 @@ abstract class wdtax_wikidata {
 		} else {
 			$this->set_text_property( $p );
 		}
-	}	
+	}
 	function set_text_property( $p, $label='' ) {
 		if ( !in_array( $p, array_keys( get_object_vars( $this ) ) ) ) {
-			return false; 
+			return false;
 		} else {
 			$tag = $p.$label;
 		}
@@ -80,7 +78,6 @@ abstract class wdtax_wikidata {
 			return false;
 		}
 	}
-	
 	function set_year_property( $p ) {
 		if ( !in_array( $p, array_keys( get_object_vars( $this ) ) ) ) {
 			return false;
@@ -100,7 +97,7 @@ abstract class wdtax_wikidata {
 			return false;
 		}
 	}
-	
+
 	protected function strip_zero($year_in) {
 		if ('0' !== substr( $year_in, 0, 1 ) ) {
 			return $year_in;
@@ -129,12 +126,15 @@ abstract class wdtax_wikidata {
 			return false;
 		}
 	}
-	function store_property( $p, $tag) {
+	function store_property( $term_id, $p, $meta_key) {
+		//$term_id, the id of an existing taxonomy term
+		//$p a property, hopefully one of the proerties of an object of this class
+		//$meta_key, the key for storing the value of the property in term metadata
 		if ( !in_array( $p, array_keys( get_object_vars( $this ) ) ) ) {
 			return false;
 		}
 		if ( $this->$p ) {
-			update_term_meta( $this->term_id, $tag,  $this->$p );
+			update_term_meta( $term_id, $meta_key,  $this->$p );
 		} else {
 			return false;
 		}
@@ -144,8 +144,38 @@ abstract class wdtax_wikidata {
 		$query = urlencode($this->sparqlQuery);
 		$format = 'json';
 		$queryUrl = $this->endpointUrl.'?query='.$query.'&format='.$format;
-		$this->wikidata = json_decode( file_get_contents( $queryUrl ) );
+		$response = wp_remote_get( $queryUrl );
+		if ( is_array( $response ) ) {
+				$this->wikidata = json_decode( $response['body'] );
+		} else {
+			echo 'sorry no wikidata for you';
+		}
 	}
+}
+
+class wdtax_basic_wikidata extends wdtax_wikidata {
+  public function __construct( $wd_id ) {
+		// what type of object do we expect for each wikidata property
+    $property_types = array(
+          'label'=>'',
+          'description'=>''
+        );
+    $where = array( 'wd:'.$wd_id.' rdfs:label ?label',
+    						  'wd:'.$wd_id.' schema:description ?description'
+                );  //for sparql WHERE clause
+    $select = '';   //for sparql SELECT clause
+    foreach ( array_keys( $property_types ) as $property ) {
+	     $select = $select.'?'.$property.' ';
+    }
+    $this->sparqlQuery =
+      'SELECT '.$select.' '.
+      'WHERE {'.implode(' .', $where ).' '.
+      'FILTER(LANG(?label) = "en").'.
+      'FILTER(LANG(?description) = "en").'.
+      'SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }'.
+      '}';
+    parent::__construct( $wd_id );
+  }
 }
 
 class wdtax_person_wikidata extends wdtax_wikidata {
@@ -156,15 +186,15 @@ class wdtax_person_wikidata extends wdtax_wikidata {
 	protected $pod; // place of death
 	protected $cod; // country of death
 
-  	public function __construct( $wd_id, $term_id ) {
-		$types = array(
-						'label'=>'', 
+  public function __construct( $wd_id ) {
+		$property_types = array(
+						'label'=>'',
 						'description'=>'',
-						'dob'=>'Year', 
-						'pob'=>'Label', 
-						'cob'=>'Label', 
-						'dod'=>'Year', 
-						'pod'=>'Label', 
+						'dob'=>'Year',
+						'pob'=>'Label',
+						'cob'=>'Label',
+						'dod'=>'Year',
+						'pod'=>'Label',
 						'cod'=>'Label'
 					);
 		$where = array( 'wd:'.$wd_id.' rdfs:label ?label',
@@ -177,22 +207,21 @@ class wdtax_person_wikidata extends wdtax_wikidata {
 						'?pod wdt:P17 ?cod'
 					);
 		$select = '';
-		foreach ( array_keys( $types ) as $property ) {
-			if ('Label'===$types[$property]) {
-				$select = $select.'?'.$property.$types[$property].' ';
+		foreach ( array_keys( $property_types ) as $property ) {
+			if ('Label'===$property_types[$property]) {
+				$select = $select.'?'.$property.$property_types[$property].' ';
 			} else {
 				$select = $select.'?'.$property.' ';
 			}
 		}
-		$this->sparqlQuery = 
+		$this->sparqlQuery =
 			'SELECT '.$select.' '.
 			'WHERE {'.implode(' .', $where ).' '.
 				'FILTER(LANG(?label) = "en").'.
 				'FILTER(LANG(?description) = "en").'.
 				'SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }'.
 			'}';
-  		parent::__construct( $wd_id, $term_id );
-  		$this->taxonomy = 'wdtax_people';
+  	parent::__construct( $wd_id );
 		$this->set_property( 'dob', 'Year' );
 		$this->set_property( 'dod', 'Year' );
 		$this->set_property( 'pob', 'Label' );

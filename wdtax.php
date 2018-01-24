@@ -13,15 +13,14 @@ defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
 
 $wdtax_dir = plugin_dir_path( __FILE__ );
 include_once( $wdtax_dir.'inc/taxonomy_class.php' );
-include_once( $wdtax_dir.'inc/wikidata_functions.php' );
+include_once( $wdtax_dir.'inc/wikidata_class.php' );
 
 
 $wd_about_taxonomy = new wdtax_taxonomy('wdtax_about',
 	                             'post',
 															 'About Term',
 															 'About Terms');
-$wd_about_taxonomy->init(); //registers methods with init hook
-$wd_about_taxonomy->admin_init(); //registers methods with admin_init hook
+$wd_about_taxonomy->init(); //registers methods with various init hooks
 
 //	wdtax_register_taxonomy('wdtax_places', 'chapter', 'place', 'places');
 //	wdtax_register_taxonomy('wdtax_events', 'chapter', 'event', 'events');
