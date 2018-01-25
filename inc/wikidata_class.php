@@ -9,7 +9,7 @@
 */
 defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
 
-abstract class wdtax_wikidata {
+abstract class wdtax_wikidata_basics {
 	/* cannot be instantiated except when extended to define
 	 * $sparqlQuery
 	 *
@@ -24,20 +24,24 @@ abstract class wdtax_wikidata {
 	 * properties need to be stored explicitly
 	 */
 	public $id;
-	public $label;
-	public $description;
+//	public $label;
+//	public $description;
 	public $type;
-//	public $properties; //not used? object properties set w/o declaring property
-	public $wikidata;
+	public $properties = array( 'label' =>'',
+                              'description' => '',
+															'type' =>''
+														);
+//	public $wikidata; ?not used
 	public $endpointUrl = 'https://query.wikidata.org/sparql';
 	public $sparqlQuery = '';
+	public $typed_specific ; //an embeded
 
 	public function __construct( $wd_id ) {
 		$this->set_id( $wd_id );
 		$this->fetch_wikidata();
 		$this->set_text_property( 'label' );
 		$this->set_text_property( 'description' );
-		$this->properties = array();
+//		$this->properties = array();
 	}
 	protected function set_id( $new_id ) {
 		$this->id = $new_id;
@@ -51,8 +55,8 @@ abstract class wdtax_wikidata {
 	}
 	function store_term_data( $term_id, $taxonomy ) {
 		$args = array(
-				'description' => $this->description,
-				'name' => $this->label
+				'description' => $this->properties['description'],
+				'name' => $this->properties['label']
 			);
 		wp_update_term( $term_id, $taxonomy, $args );
 	}
@@ -66,13 +70,14 @@ abstract class wdtax_wikidata {
 		}
 	}
 	function set_text_property( $p, $label='' ) {
-		if ( !in_array( $p, array_keys( get_object_vars( $this ) ) ) ) {
+		if ( !in_array( $p, array_keys(  $this->properties ) ) ) {
 			return false;
 		} else {
 			$tag = $p.$label;
 		}
 		if ( isset( $this->wikidata->results->bindings[0]->$tag->value ) ) {
 			$this->$p = $this->wikidata->results->bindings[0]->$tag->value;
+			$this->properties[$p] = $this->wikidata->results->bindings[0]->$tag->value;
 			return true;
 		} else {
 			$this->$p = false;
@@ -80,6 +85,9 @@ abstract class wdtax_wikidata {
 		}
 	}
 	function set_year_property( $p ) {
+/*
+!!needs converting to use properties array instead of property attributes
+
 		if ( !in_array( $p, array_keys( get_object_vars( $this ) ) ) ) {
 			return false;
 		}
@@ -97,6 +105,7 @@ abstract class wdtax_wikidata {
 			$this->$p = false;
 			return false;
 		}
+*/
 	}
 
 	protected function strip_zero($year_in) {
@@ -131,11 +140,11 @@ abstract class wdtax_wikidata {
 		//$term_id, the id of an existing taxonomy term
 		//$p a property, hopefully one of the proerties of an object of this class
 		//$meta_key, the key for storing the value of the property in term metadata
-		if ( !in_array( $p, array_keys( get_object_vars( $this ) ) ) ) {
+		if ( !in_array( $p, array_keys(  $this->properties  ) ) ) {
 			return false;
 		}
-		if ( $this->$p ) {
-			update_term_meta( $term_id, $meta_key,  $this->$p );
+		if ( $this->properties[$p] ) {
+			update_term_meta( $term_id, $meta_key,  $this->properties[$p] );
 		} else {
 			return false;
 		}
@@ -154,7 +163,7 @@ abstract class wdtax_wikidata {
 	}
 }
 
-class wdtax_basic_wikidata extends wdtax_wikidata {
+class wdtax_wikidata extends wdtax_wikidata_basics {
   public function __construct( $wd_id ) {
 		// what type of object do we expect for each wikidata property
     $property_types = array(

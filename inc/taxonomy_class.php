@@ -201,10 +201,17 @@ class wdtax_taxonomy {
   /* will fetch wikidata for $wd_id, which should be wikidata identifier (Q#)
    * and will store relevant data as proerties/metadata for taxonomy term
    */
-    $wikidata = new wdtax_basic_wikidata( $wd_id );
+    $wikidata = new wdtax_wikidata( $wd_id );
     $wikidata->store_term_data( $term_id, $this->id );
+//    print_r( $wikidata->properties );
     $wikidata->store_property( $term_id, 'description', 'wd_description' );
     $wikidata->store_property( $term_id, 'label', 'wd_name' );
     $wikidata->store_property( $term_id, 'type', 'wd_type' );
+    $wd_type = get_term_meta( $term_id, 'wd_type', true );
+    if ( 'human' === $wd_type ) {
+//      echo 'we have a human';
+    } else {
+//      echo 'dont know this type';
+    }
   }
 }
