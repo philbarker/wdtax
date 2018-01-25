@@ -25,7 +25,8 @@ class wdtax_taxonomy {
  * edit_form_fields( $wd_term ) : fields for edit term form (called by
  *     admin_init)
  * save_meta() : saves term metadata (called by admin_init)
- *
+ * fetch_store_wikidata( $term ) : gets and stores wikidata for
+ *           $term in the taxonomy
  */
   protected $id;     //id of the taxonomy
   protected $type;   //types of post to which taxonomy apllies
@@ -82,15 +83,17 @@ class wdtax_taxonomy {
     $hook = $this->id.'_edit_form_fields';
     $action = array($this, 'edit_form_fields');
     add_action( $hook, $action, 10, 2 );
-    //save term metadata on create and edit
-    $hook = 'created_'.$this->id;
-    $action = array($this, 'save_meta');
-    add_action( $hook, $action, 10, 2 );
+    //save term metadata on edit
     $hook = 'edited_'.$this->id;
+    $action = array($this, 'on_edit_term');
+    add_action( $hook, $action, 10, 2 );
+    $hook = 'create_'.$this->id;
+    $action = array($this, 'on_create_term');
+//    $action = array($this, 'save_meta');
     add_action( $hook, $action, 10, 2 );
     //get and store metadata from wikidata before loading edit form
     $hook = $this->id.'_pre_edit_form';
-    $action = array($this, 'get_wikidata');
+    $action = array($this, 'pre_edit_form');
     add_action( $hook, $action, 10, 2 );
   }
   function register_wdtaxonomy() {
@@ -102,7 +105,7 @@ class wdtax_taxonomy {
       ?>
       <div class="form-field term-group">
           <label for="wd_id"><?php _e( 'Wikidata ID', 'wdtax' ); ?></label>
-          <input type="url" id="wd_id" name="wd_id" />
+          <input type="text" id="wd_id" name="wd_id" />
       </div>
       <?php
   }
@@ -142,37 +145,53 @@ class wdtax_taxonomy {
       	</script>
     <?php
   }
-
-  function save_meta( $term_id, $tag_id ) {
-  /*Hooked into save and edit term.
-   *There is no need to save metadata that comes from wikidata here
-   *as it is fetched and saved on pre-loading the term edit form.
+  function on_create_term( $term_id ) {
+    /* If new term has wd_id property will fetch metadata from wikidata
+     * & store as term metadata
+     * hooked in to {$taxonomy}_create_term
+     */
+    if( isset( $_POST['wd_id'] ) ) {
+      $wd_id = ucfirst( esc_attr( $_POST['wd_id'] ) );
+      update_term_meta( $term_id, 'wd_id', $wd_id );
+      $this->fetch_store_wikidata( $wd_id, $term_id );
+    }
+  }
+  function on_edit_term( $term_id ) {
+  /*Hooked into edit term for this taxonomy.
+   *Don't save metadata that comes from wikidata when term is editted
+   *It is fetched and saved on pre-loading the term edit form, and then
+   *edit form is reloaded on update.
    *If you do save metadata from wikidata here, it will call the edit term
    *events, including this method. Which would then call the edit term
    *events, including this method. Which would then call the edit term
    *events, including this method. Which would then call the edit term
    *events, including this method. Which would then call the edit term
    */
-      if( isset( $_POST['wd_id'] ) ) {
-          update_term_meta( $term_id, 'wd_id',
-          	ucfirst( esc_attr( $_POST['wd_id'] ) )
-          );
-      $wikidata = new wdtax_basic_wikidata( $wd_id );
-      }
+    if( isset( $_POST['wd_id'] ) ) {
+      $wd_id = ucfirst( esc_attr($_POST['wd_id']) );
+      update_term_meta( $term_id, 'wd_id', $wd_id );
+    }
   }
-
-  function get_wikidata( $term ) {
+  function pre_edit_form( $term ) {
+  /* If term has wd_id property will fetch metadata from wikidata
+   * & store as term metadata, (which is displayed in edit form)
+   * hooked in to {$taxonomy}_pre_edit_form, runs before edit form is loaded
+   * see on_edit_term for why this is needed
+   */
   	$term_id = $term->term_id;
     $wd_id = ucfirst( get_term_meta( $term_id, 'wd_id', true ) );
    	$args = array();
     if( isset( $wd_id ) ) {
-      $wikidata = new wdtax_basic_wikidata( $wd_id );
-      $wikidata->store_term_data( $term_id, $this->id );
-      $wikidata->store_property( $term_id, 'description', 'wd_description' );
-	    $wikidata->store_property( $term_id, 'label', 'wd_name' );
-
-//      print_r($wikidata);
+      $this->fetch_store_wikidata( $wd_id, $term_id );
     }
-
+  }
+  function fetch_store_wikidata( $wd_id, $term_id ) {
+  /* will fetch wikidata for $wd_id, which should be wikidata identifier (Q#)
+   * and will store relevant data as proerties/metadata for taxonomy term
+   */
+    $wikidata = new wdtax_basic_wikidata( $wd_id );
+    $wikidata->store_term_data( $term_id, $this->id );
+    $wikidata->store_property( $term_id, 'description', 'wd_description' );
+    $wikidata->store_property( $term_id, 'label', 'wd_name' );
   }
 }
