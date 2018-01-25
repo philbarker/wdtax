@@ -119,6 +119,7 @@ class wdtax_taxonomy {
 //    $wd_description = $term->description;
     $wd_name = get_term_meta( $term->term_id, 'wd_name', true );
     $wd_description = get_term_meta( $term->term_id, 'wd_description', true );
+    $wd_type = get_term_meta( $term->term_id, 'wd_type', true );
     ?>
     <tr class="form-field term-group-wrap">
         <th scope="row">
@@ -136,6 +137,7 @@ class wdtax_taxonomy {
         <td>
           Name: <?php _e( $wd_name, 'wdtax' ); ?><br ?>
           Description: <?php _e( $wd_description, 'wdtax' ); ?><br ?>
+          Type: <?php _e( $wd_type, 'wdtax' ); ?><br ?>
         </td>
     </tr>
 
@@ -203,5 +205,6 @@ class wdtax_taxonomy {
     $wikidata->store_term_data( $term_id, $this->id );
     $wikidata->store_property( $term_id, 'description', 'wd_description' );
     $wikidata->store_property( $term_id, 'label', 'wd_name' );
+    $wikidata->store_property( $term_id, 'type', 'wd_type' );
   }
 }

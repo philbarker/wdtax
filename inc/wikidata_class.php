@@ -26,6 +26,7 @@ abstract class wdtax_wikidata {
 	public $id;
 	public $label;
 	public $description;
+	public $type;
 //	public $properties; //not used? object properties set w/o declaring property
 	public $wikidata;
 	public $endpointUrl = 'https://query.wikidata.org/sparql';
@@ -158,15 +159,21 @@ class wdtax_basic_wikidata extends wdtax_wikidata {
 		// what type of object do we expect for each wikidata property
     $property_types = array(
           'label'=>'',
-          'description'=>''
+          'description'=>'',
+					'type'=>'Label'
         );
     $where = array( 'wd:'.$wd_id.' rdfs:label ?label',
-    						  'wd:'.$wd_id.' schema:description ?description'
+    						  'wd:'.$wd_id.' schema:description ?description',
+									'wd:'.$wd_id.' wdt:P31 ?type'
                 );  //for sparql WHERE clause
     $select = '';   //for sparql SELECT clause
-    foreach ( array_keys( $property_types ) as $property ) {
-	     $select = $select.'?'.$property.' ';
-    }
+		foreach ( array_keys( $property_types ) as $property ) {
+			if ('Label'===$property_types[$property]) {
+				$select = $select.'?'.$property.$property_types[$property].' ';
+			} else {
+				$select = $select.'?'.$property.' ';
+			}
+		}
     $this->sparqlQuery =
       'SELECT '.$select.' '.
       'WHERE {'.implode(' .', $where ).' '.
@@ -175,6 +182,8 @@ class wdtax_basic_wikidata extends wdtax_wikidata {
       'SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }'.
       '}';
     parent::__construct( $wd_id );
+		$this->set_property( 'type', 'Label' );
+
   }
 }
 
