@@ -129,6 +129,16 @@ class wdtax_taxonomy {
             	   value="<?php echo ucfirst($wd_id); ?>" />
         </td>
     </tr>
+    <tr class="form-field term-group-wrap">
+        <th scope="row">
+            Wikidata:
+        </th>
+        <td>
+          Name: <?php _e( $wd_name, 'wdtax' ); ?><br ?>
+          Description: <?php _e( $wd_description, 'wdtax' ); ?><br ?>
+        </td>
+    </tr>
+
     <!--JavaScript required so that name and description fields are updated-->
         <script>
        	  var f = document.getElementById("edittag"); //form
