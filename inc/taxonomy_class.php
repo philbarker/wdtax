@@ -115,13 +115,9 @@ class wdtax_taxonomy {
     //fires after edit term form fields are displayed
     $term_id = $term->term_id;
     $wd_id = ucfirst( get_term_meta( $term_id, 'wd_id', true ) );
-//    $wd_name = $term->name;
-//    $wd_description = $term->description;
-    $wd_name = get_term_meta( $term->term_id, 'wd_name', true );
-    $wd_description = get_term_meta( $term->term_id, 'wd_description', true );
-    $wd_type = get_term_meta( $term->term_id, 'wd_type', true );
-    $wd_pob = get_term_meta( $term->term_id, 'wd_pob', true );
-    $wd_dob = get_term_meta( $term->term_id, 'wd_birth_year', true );
+    $wd_name = $term->name;
+    $wd_description = $term->description;
+    $term_meta = get_term_meta( $term->term_id );
     ?>
     <tr class="form-field term-group-wrap">
         <th scope="row">
@@ -137,11 +133,13 @@ class wdtax_taxonomy {
             Wikidata:
         </th>
         <td>
-          Name: <?php _e( $wd_name, 'wdtax' ); ?><br />
-          Description: <?php _e( $wd_description, 'wdtax' ); ?><br />
-          Type: <?php _e( $wd_type, 'wdtax' ); ?><br />
-          Place of birth <?php _e( $wd_pob, 'wdtax' ); ?><br />
-          Date of birth <?php _e( $wd_dob, 'wdtax' ); ?><br />
+          <?php
+          foreach ( array_keys( $term_meta ) as $key ) {
+            print_r( '<b>'.$key.': </b>');
+            print_r($term_meta[$key][0]);
+            echo '<br />' ;
+          }
+           ?>
         </td>
     </tr>
 
@@ -216,7 +214,6 @@ class wdtax_taxonomy {
 //      echo 'we have a human';
 //      add human properties & their types to $wikidata
       $wikidata->reconstruct_human();
-      $wikidata->store_property( $term_id, 'pob', 'wd_pob' );
       $wikidata->store_property( $term_id, 'dob', 'wd_birth_year' );
     	$wikidata->store_property( $term_id, 'dod', 'wd_death_year' );
     	$wikidata->store_property( $term_id, 'pob', 'wd_birth_place' );
