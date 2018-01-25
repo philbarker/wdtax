@@ -115,8 +115,8 @@ class wdtax_taxonomy {
     //fires after edit term form fields are displayed
     $term_id = $term->term_id;
     $wd_id = ucfirst( get_term_meta( $term_id, 'wd_id', true ) );
-    $wd_name = $term->name;
-    $wd_description = $term->description;
+    $wd_name = get_term_meta( $term_id, 'wd_name', true );
+    $wd_description = get_term_meta( $term_id, 'wd_description', true );
     $term_meta = get_term_meta( $term->term_id );
     ?>
     <tr class="form-field term-group-wrap">
