@@ -199,7 +199,7 @@ class wdtax_taxonomy {
       $this->fetch_store_wikidata( $wd_id, $term_id );
     }
   }
-  function delete_term_metadata ( $term_id ) {
+  function delete_term_metadata( $term_id ) {
     foreach ( array_keys( get_term_meta( $term_id ) ) as $key ) {
       delete_term_meta( $term_id, $key );
     }
