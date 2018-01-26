@@ -199,13 +199,21 @@ class wdtax_taxonomy {
       $this->fetch_store_wikidata( $wd_id, $term_id );
     }
   }
+  function delete_term_metadata ( $term_id ) {
+    foreach ( array_keys( get_term_meta( $term_id ) ) as $key ) {
+      delete_term_meta( $term_id, $key );
+    }
+    return;
+  }
   function fetch_store_wikidata( $wd_id, $term_id ) {
   /* will fetch wikidata for $wd_id, which should be wikidata identifier (Q#)
    * and will store relevant data as proerties/metadata for taxonomy term
    */
+    $this->delete_term_metadata( $term_id );
     $wikidata = new wdtax_wikidata( $wd_id );
+    $wikidata->store_id( $term_id );
     $wikidata->store_term_data( $term_id, $this->id );
-//    print_r( $wikidata->properties );
+    $wikidata->store_property( $term_id, 'id', 'wd_id' );
     $wikidata->store_property( $term_id, 'description', 'wd_description' );
     $wikidata->store_property( $term_id, 'label', 'wd_name' );
     $wikidata->store_property( $term_id, 'type', 'wd_type' );

@@ -27,7 +27,8 @@ abstract class wdtax_wikidata_basics {
 //	public $label;
 //	public $description;
 	public $type;
-	public $properties = array( 'label' =>'',
+	public $properties = array( 'id' =>'',
+															'label' =>'',
                               'description' => '',
 															'type' =>''
 														);
@@ -52,6 +53,9 @@ abstract class wdtax_wikidata_basics {
 		} else {
 			return false;
 		}
+	}
+	function store_id( $term_id ) {
+		update_term_meta( $term_id, 'wd_id',  $this->id );
 	}
 	function store_term_data( $term_id, $taxonomy ) {
 		$args = array(
