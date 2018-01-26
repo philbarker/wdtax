@@ -1,48 +1,53 @@
 <?php
 /**
- * The template for displaying archive pages
+ * A template displaying archive pages for the about taxonomy
  *
- * Used to display archive-type pages if nothing more specific matches a query.
- * For example, puts together date-based pages if no date.php file exists.
+ * Used to display the about taxonomy if the theme does not provide a
+ * does not provide a more specific archive template
  *
  * If you'd like to further customize these archive views, you may create a
  * new template file for each one. For example, tag.php (Tag archives),
  * category.php (Category archives), author.php (Author archives), etc.
  *
- * @link https://codex.wordpress.org/Template_Hierarchy
- *
- * @package WordPress
- * @subpackage Twenty_Sixteen
- * @since Twenty Sixteen 1.0
+ * based on the twentysixteen archive and content templates
  */
 
-get_header(); ?>
+get_header();
+$term_id = get_queried_object_id();
+$term_meta = get_term_meta( $term_id );
+
+?>
 
 	<div id="primary" class="content-area">
 		<main id="main" class="site-main" role="main">
-
-		<?php if ( have_posts() ) : ?>
-
 			<header class="page-header">
 				<?php
 					the_archive_title( '<h1 class="page-title">', '</h1>' );
 					the_archive_description( '<div class="taxonomy-description">', '</div>' );
+					foreach ( array_keys( $term_meta ) as $key ) {
+						print_r( '<b>'.$key.': </b>');
+						print_r($term_meta[$key][0]);
+						echo '<br />' ;
+					}
 				?>
-				<p>HELLO PHIL</p>
 			</header><!-- .page-header -->
 
-			<?php
+		<?php if ( have_posts() ) : 
 			// Start the Loop.
 			while ( have_posts() ) : the_post();
 
-				/*
-				 * Include the Post-Format-specific template for the content.
-				 * If you want to override this in a child theme, then include a file
-				 * called content-___.php (where ___ is the Post Format name) and that will be used instead.
-				 */
-				get_template_part( 'template-parts/content', get_post_format() );
+?>
+<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
+	<header class="entry-header">
+		<?php the_title( sprintf( '<h3 ><a href="%s" rel="bookmark">', esc_url( get_permalink() ) ), '</a></h3>' ); ?>
+	</header><!-- .entry-header -->
 
-			// End the loop.
+	<?php the_excerpt(); ?>
+
+	<?php twentysixteen_post_thumbnail(); ?>
+
+</article><!-- #post-## -->
+<?php
 			endwhile;
 
 			// Previous/next page navigation.
@@ -54,8 +59,15 @@ get_header(); ?>
 
 		// If no content, include the "No posts found" template.
 		else :
+			?>
+			<header class="page-header">
+				<?php
+					the_archive_title( '<h1 class="page-title">', '</h1>' );
+					the_archive_description( '<div class="taxonomy-description">', '</div>' );
+				?>
+			</header><!-- .page-header -->
+<?php
 			get_template_part( 'template-parts/content', 'none' );
-
 		endif;
 		?>
 
