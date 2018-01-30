@@ -34,16 +34,19 @@ class wdtax_taxonomy {
   //next: keys used for storing wikidata properties as term metadata mapped
   //to key in $taxonomy->properties array, human label, schema id, ?wd id?...
   public $property_key_map = array(
-    'wd_id' => ['id', 'Wikidata ID'],
-    'wd_description' => ['description', 'Description'],
-    'wd_name' => ['label', 'Name'],
-    'wd_type' => ['type', 'Type'],
-    'wd_birth_year' => ['dob', 'Year of birth'],
-    'wd_death_year' => ['dod', 'Year of death'],
-    'wd_birth_place' =>['pob', 'Place of birth'],
-    'wd_birth_country' => ['cob', 'Country of birth'],
-    'wd_death_place' => ['pod', 'Place of death'],
-    'wd_death_country' => ['cod', 'Country of death']
+    'wd_id' => ['id', 'Wikidata ID', ''],
+    'wd_description' => ['description', 'Description', 'description'],
+    'wd_name' => ['label', 'Name', 'name'],
+    'wd_type' => ['type', 'Type', ''],
+    'wd_birth_year' => ['dob', 'Year of birth', 'birthDate'],
+    'wd_death_year' => ['dod', 'Year of death', 'deathDate'],
+    'wd_birth_place' =>['pob', 'Place of birth', 'birthPlace'],
+    'wd_birth_country' => ['cob', 'Country of birth', 'birthPlace'],
+    'wd_death_place' => ['pod', 'Place of death', 'deathPlace'],
+    'wd_death_country' => ['cod', 'Country of death', 'deathPlace']
+  );
+  public $type_key_map = array(
+    'human' => 'Person'
   );
 
   function __construct($taxonomy, $type, $s_name='', $p_name='') {
@@ -229,20 +232,20 @@ class wdtax_taxonomy {
     $wd->store_id( $term_id );
     $wd->store_term_data( $term_id, $this->id );
     $wd->store_property( $term_id, 'wd_id', $keymap['wd_id'][0] );
-    $wd->store_property( $term_id, 'wd_description', $keymap['description'][0] );
-    $wd->store_property( $term_id, 'wd_name', $keymap['label'][0] );
-    $wd->store_property( $term_id, 'wd_type', $keymap['type'][0] );
+    $wd->store_property( $term_id, 'wd_description', $keymap['wd_description'][0] );
+    $wd->store_property( $term_id, 'wd_name', $keymap['wd_name'][0] );
+    $wd->store_property( $term_id, 'wd_type', $keymap['wd_type'][0] );
     $wd_type = get_term_meta( $term_id, 'wd_type', true );
     if ( 'human' === $wd_type ) {
 //      echo 'we have a human';
 //      add human properties & their types to $wd
       $wd->reconstruct_human();
-      $wd->store_property( $term_id, 'wd_birth_year', $keymap['dob'][0] );
-    	$wd->store_property( $term_id, 'wd_death_year', $keymap['dod'][0] );
-    	$wd->store_property( $term_id, 'wd_birth_place', $keymap['pob'][0] );
-    	$wd->store_property( $term_id, 'wd_birth_country', $keymap['cob'][0] );
-    	$wd->store_property( $term_id, 'wd_death_place', $keymap['pod'][0] );
-    	$wd->store_property( $term_id, 'wd_death_country', $keymap['cod'][0] );
+      $wd->store_property( $term_id, 'wd_birth_year', $keymap['wd_birth_year'][0] );
+    	$wd->store_property( $term_id, 'wd_death_year', $keymap['wd_death_year'][0] );
+    	$wd->store_property( $term_id, 'wd_birth_place', $keymap['wd_birth_place'][0] );
+    	$wd->store_property( $term_id, 'wd_birth_country', $keymap['wd_birth_country'][0] );
+    	$wd->store_property( $term_id, 'wd_death_place', $keymap['wd_death_place'][0] );
+    	$wd->store_property( $term_id, 'wd_death_country', $keymap['wd_death_country'][0] );
     } else {
 //     echo 'dont know this type';
     }
