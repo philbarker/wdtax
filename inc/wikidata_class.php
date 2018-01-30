@@ -136,7 +136,7 @@ abstract class wdtax_wikidata_basics {
 			return false;
 		}
 	}
-	function store_property( $term_id, $p, $meta_key) {
+	function store_property( $term_id, $meta_key, $p ) {
 		//$term_id, the id of an existing taxonomy term
 		//$p a property, hopefully one of the proerties of an object of this class
 		//$meta_key, the key for storing the value of the property in term metadata
@@ -192,7 +192,6 @@ class wdtax_wikidata extends wdtax_wikidata_basics {
       '}';
     parent::__construct( $wd_id );
 		$this->set_property( 'type', 'Label' );
-
   }
 	function reconstruct_human( ) {
 		$wd_id = $this->id;

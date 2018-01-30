@@ -15,7 +15,8 @@
 get_header();
 $term_id = get_queried_object_id();
 $term_meta = get_term_meta( $term_id );
-
+global $wdtax_about_taxonomy; //instance of object from inc/taxonomy_class.php
+$keymap = $wdtax_about_taxonomy->property_key_map;
 ?>
 
 	<div id="primary" class="content-area">
@@ -25,14 +26,15 @@ $term_meta = get_term_meta( $term_id );
 					the_archive_title( '<h1 class="page-title">', '</h1>' );
 					the_archive_description( '<div class="taxonomy-description">', '</div>' );
 					foreach ( array_keys( $term_meta ) as $key ) {
-						print_r( '<b>'.$key.': </b>');
+						print_r( '<b>'.$keymap[$key][1].': </b>');
 						print_r($term_meta[$key][0]);
 						echo '<br />' ;
 					}
+
 				?>
 			</header><!-- .page-header -->
 
-		<?php if ( have_posts() ) : 
+		<?php if ( have_posts() ) :
 			// Start the Loop.
 			while ( have_posts() ) : the_post();
 
@@ -59,14 +61,6 @@ $term_meta = get_term_meta( $term_id );
 
 		// If no content, include the "No posts found" template.
 		else :
-			?>
-			<header class="page-header">
-				<?php
-					the_archive_title( '<h1 class="page-title">', '</h1>' );
-					the_archive_description( '<div class="taxonomy-description">', '</div>' );
-				?>
-			</header><!-- .page-header -->
-<?php
 			get_template_part( 'template-parts/content', 'none' );
 		endif;
 		?>

@@ -16,8 +16,8 @@ include_once( $wdtax_dir.'inc/taxonomy_class.php' );
 include_once( $wdtax_dir.'inc/wikidata_class.php' );
 include_once( $wdtax_dir.'inc/display_functions.php' );
 
-$wd_about_taxonomy = new wdtax_taxonomy('wdtax_about',
-	                             'post',
-															 'About Term',
-															 'About Terms');
-$wd_about_taxonomy->init(); //registers methods with various init hooks
+$wdtax_about_taxonomy = new wdtax_taxonomy('wdtax_about',
+		                             'post',
+																 'About Term',
+																 'About Terms');
+$wdtax_about_taxonomy->init(); //registers methods with various init hooks

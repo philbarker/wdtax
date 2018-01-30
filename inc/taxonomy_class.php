@@ -31,6 +31,20 @@ class wdtax_taxonomy {
   protected $id;     //id of the taxonomy
   protected $type;   //types of post to which taxonomy apllies
   protected $args;   //argument array of taxonomy
+  //next: keys used for storing wikidata properties as term metadata mapped
+  //to key in $taxonomy->properties array, human label, schema id, ?wd id?...
+  public $property_key_map = array(
+    'wd_id' => ['id', 'Wikidata ID'],
+    'wd_description' => ['description', 'Description'],
+    'wd_name' => ['label', 'Name'],
+    'wd_type' => ['type', 'Type'],
+    'wd_birth_year' => ['dob', 'Year of birth'],
+    'wd_death_year' => ['dod', 'Year of death'],
+    'wd_birth_place' =>['pob', 'Place of birth'],
+    'wd_birth_country' => ['cob', 'Country of birth'],
+    'wd_death_place' => ['pod', 'Place of death'],
+    'wd_death_country' => ['cod', 'Country of death']
+  );
 
   function __construct($taxonomy, $type, $s_name='', $p_name='') {
     /* sets up a taxonomy.
@@ -209,27 +223,28 @@ class wdtax_taxonomy {
   /* will fetch wikidata for $wd_id, which should be wikidata identifier (Q#)
    * and will store relevant data as proerties/metadata for taxonomy term
    */
+    $keymap = $this->property_key_map;
     $this->delete_term_metadata( $term_id );
-    $wikidata = new wdtax_wikidata( $wd_id );
-    $wikidata->store_id( $term_id );
-    $wikidata->store_term_data( $term_id, $this->id );
-    $wikidata->store_property( $term_id, 'id', 'wd_id' );
-    $wikidata->store_property( $term_id, 'description', 'wd_description' );
-    $wikidata->store_property( $term_id, 'label', 'wd_name' );
-    $wikidata->store_property( $term_id, 'type', 'wd_type' );
+    $wd = new wdtax_wikidata( $wd_id );
+    $wd->store_id( $term_id );
+    $wd->store_term_data( $term_id, $this->id );
+    $wd->store_property( $term_id, 'wd_id', $keymap['wd_id'][0] );
+    $wd->store_property( $term_id, 'wd_description', $keymap['description'][0] );
+    $wd->store_property( $term_id, 'wd_name', $keymap['label'][0] );
+    $wd->store_property( $term_id, 'wd_type', $keymap['type'][0] );
     $wd_type = get_term_meta( $term_id, 'wd_type', true );
     if ( 'human' === $wd_type ) {
 //      echo 'we have a human';
-//      add human properties & their types to $wikidata
-      $wikidata->reconstruct_human();
-      $wikidata->store_property( $term_id, 'dob', 'wd_birth_year' );
-    	$wikidata->store_property( $term_id, 'dod', 'wd_death_year' );
-    	$wikidata->store_property( $term_id, 'pob', 'wd_birth_place' );
-    	$wikidata->store_property( $term_id, 'cob', 'wd_birth_country' );
-    	$wikidata->store_property( $term_id, 'pod', 'wd_death_place' );
-    	$wikidata->store_property( $term_id, 'cod', 'wd_death_country' );
+//      add human properties & their types to $wd
+      $wd->reconstruct_human();
+      $wd->store_property( $term_id, 'wd_birth_year', $keymap['dob'][0] );
+    	$wd->store_property( $term_id, 'wd_death_year', $keymap['dod'][0] );
+    	$wd->store_property( $term_id, 'wd_birth_place', $keymap['pob'][0] );
+    	$wd->store_property( $term_id, 'wd_birth_country', $keymap['cob'][0] );
+    	$wd->store_property( $term_id, 'wd_death_place', $keymap['pod'][0] );
+    	$wd->store_property( $term_id, 'wd_death_country', $keymap['cod'][0] );
     } else {
-//      echo 'dont know this type';
+//     echo 'dont know this type';
     }
   }
 }
