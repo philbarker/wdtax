@@ -37,7 +37,7 @@ abstract class wdtax_wikidata_basics {
 		$this->fetch_wikidata();
 		$this->set_text_property( 'label' );
 		$this->set_text_property( 'description' );
-		$this->set_property( 'type', 'Label' );
+		$this->fetch_set_type( );
 	}
 	function store_term_data( $term_id, $taxonomy ) {
 		$args = array(
@@ -141,8 +141,35 @@ abstract class wdtax_wikidata_basics {
 		if ( is_array( $response ) ) {
 				$this->wikidata = json_decode( $response['body'] );
 		} else {
-			echo 'sorry no wikidata for you';
+			echo 'sorry nothing from wikidata for you';
 		}
+	}
+	function fetch_set_type() {
+		$wd_id = $this->properties['id'];
+		$typeSparqlQuery = "
+		SELECT ?typeLabel
+		WHERE {
+		  wd:{$wd_id} wdt:P31 ?type
+		  SERVICE wikibase:label {
+		    bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\".
+		  }
+		}
+		";
+		$query = urlencode($typeSparqlQuery);
+		$format = 'json';
+		$queryUrl = $this->endpointUrl.'?query='.$query.'&format='.$format;
+		$response = wp_remote_get( $queryUrl );
+		if ( is_array( $response ) ) {
+				$type_wikidata = json_decode( $response['body'] );
+				if (isset ( $type_wikidata->results->bindings[0]->typeLabel->value ) ) {
+					$this->properties['type'] = $type_wikidata->results->bindings[0]->typeLabel->value;
+				} else {
+					$this->properties['type'] = '';
+				}
+		} else {
+			echo 'sorry nothing from wikidata for you';
+		}
+
 	}
 }
 
@@ -152,11 +179,11 @@ class wdtax_generic_wikidata extends wdtax_wikidata_basics {
     $property_types = array(
           'label'=>'',
           'description'=>'',
-					'type'=>'Label'
+//					'type'=>'Label'
         );
     $where = array( 'wd:'.$wd_id.' rdfs:label ?label',
     						  'wd:'.$wd_id.' schema:description ?description',
-									'wd:'.$wd_id.' wdt:P31 ?type'
+//									'wd:'.$wd_id.' wdt:P31 ?type'
                 );  //for sparql WHERE clause
     $select = '';   //for sparql SELECT clause
 		foreach ( array_keys( $property_types ) as $property ) {
