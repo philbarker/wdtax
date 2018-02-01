@@ -20,42 +20,24 @@ abstract class wdtax_wikidata_basics {
 	 * store_ value of property as metadata
 	 !!maybe the store_ methods ought to be in the taxonomy class.
 	 *
-	 * wikidate is fetched and properties set on initiation
+	 * wikidata is fetched and properties set on initiation
 	 * properties need to be stored explicitly
 	 */
-	public $id;
-//	public $label;
-//	public $description;
-	public $type;
 	public $properties = array( 'id' =>'',
 															'label' =>'',
                               'description' => '',
 															'type' =>''
 														);
-//	public $wikidata; ?not used
 	public $endpointUrl = 'https://query.wikidata.org/sparql';
 	public $sparqlQuery = '';
-	public $typed_specific ; //an embeded
+	public $wikidata;
 
 	public function __construct( $wd_id ) {
-		$this->set_id( $wd_id );
+		$this->properties['id'] = $wd_id;
 		$this->fetch_wikidata();
 		$this->set_text_property( 'label' );
 		$this->set_text_property( 'description' );
-//		$this->properties = array();
-	}
-	protected function set_id( $new_id ) {
-		$this->id = $new_id;
-	}
-	function get_id( ) {
-		if ( $this->id ) {
-			return $this->id;
-		} else {
-			return false;
-		}
-	}
-	function store_id( $term_id ) {
-		update_term_meta( $term_id, 'wd_id',  $this->id );
+		$this->set_property( 'type', 'Label' );
 	}
 	function store_term_data( $term_id, $taxonomy ) {
 		$args = array(
@@ -141,12 +123,13 @@ abstract class wdtax_wikidata_basics {
 		//$p a property, hopefully one of the proerties of an object of this class
 		//$meta_key, the key for storing the value of the property in term metadata
 		if ( !in_array( $p, array_keys(  $this->properties  ) ) ) {
-			return false;
+			return new WP_Error( 'Error', 'Tried to store an unknown property: '.$p );
 		}
 		if ( $this->properties[$p] ) {
 			update_term_meta( $term_id, $meta_key,  $this->properties[$p] );
+			return true;
 		} else {
-			return false;
+			return new WP_Error( 'Error', 'No data to store for property: '.$p );
 		}
 	}
 
@@ -163,7 +146,7 @@ abstract class wdtax_wikidata_basics {
 	}
 }
 
-class wdtax_wikidata extends wdtax_wikidata_basics {
+class wdtax_generic_wikidata extends wdtax_wikidata_basics {
   public function __construct( $wd_id ) {
 		// what type of object do we expect for each wikidata property
     $property_types = array(
@@ -191,9 +174,8 @@ class wdtax_wikidata extends wdtax_wikidata_basics {
       'SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }'.
       '}';
     parent::__construct( $wd_id );
-		$this->set_property( 'type', 'Label' );
   }
-	function reconstruct_human( ) {
+/*	function reconstruct_human( ) {
 		$wd_id = $this->id;
 		$human_props = array(
 						'dob' => '', // date of birth
@@ -202,7 +184,7 @@ class wdtax_wikidata extends wdtax_wikidata_basics {
 						'dod' => '', // date of death
 						'pod' => '', // place of death
 						'cod' => '' // country of death
-					);
+		);
 		$this->properties = array_merge( $this->properties, $human_props);
 		$property_types = array(
 						'label'=>'',
@@ -214,7 +196,7 @@ class wdtax_wikidata extends wdtax_wikidata_basics {
 						'dod'=>'Year',
 						'pod'=>'Label',
 						'cod'=>'Label'
-					);
+		);
 		$where = array( 'wd:'.$wd_id.' rdfs:label ?label',
 						'wd:'.$wd_id.' schema:description ?description',
 						'wd:'.$wd_id.' wdt:P569 ?dob',
@@ -223,7 +205,7 @@ class wdtax_wikidata extends wdtax_wikidata_basics {
 						'wd:'.$wd_id.' wdt:P570 ?dod',
 						'wd:'.$wd_id.' wdt:P20 ?pod',
 						'?pod wdt:P17 ?cod'
-			    );
+    );
 		$select = '';
 		foreach ( array_keys( $property_types ) as $property ) {
 			if ('Label'===$property_types[$property]) {
@@ -247,36 +229,43 @@ class wdtax_wikidata extends wdtax_wikidata_basics {
  		$this->set_property( 'pod', 'Label' );
  		$this->set_property( 'cod', 'Label' );
 	}
+*/
 }
 
-class wdtax_person_wikidata extends wdtax_wikidata {
-	protected $dob; // date of birth
-	protected $pob; // place of birth
-	protected $cob; // country of birth
-	protected $dod; // date of death
-	protected $pod; // place of death
-	protected $cod; // country of death
-
+class wdtax_human_wikidata extends wdtax_wikidata_basics {
+	//Will be used to store values of wikidata properties relevant to humans
+	//This array is added to properties array of wdtax_wikidata class so no need
+	//to access it directly
+	private $human_props = array(
+					'dob' => '', // date of birth
+					'pob' => '', // place of birth
+					'cob' => '', // country of birth
+					'dod' => '', // date of death
+					'pod' => '', // place of death
+					'cod' => '' // country of death
+	);
   public function __construct( $wd_id ) {
+		$this->properties = array_merge( $this->properties, $this->human_props);
 		$property_types = array(
-						'label'=>'',
-						'description'=>'',
-						'dob'=>'Year',
-						'pob'=>'Label',
-						'cob'=>'Label',
-						'dod'=>'Year',
-						'pod'=>'Label',
-						'cod'=>'Label'
-					);
+					'label'=>'',
+					'description'=>'',
+					'type'=>'Label',
+					'dob'=>'Year',
+					'pob'=>'Label',
+					'cob'=>'Label',
+					'dod'=>'Year',
+					'pod'=>'Label',
+					'cod'=>'Label'
+		);
 		$where = array( 'wd:'.$wd_id.' rdfs:label ?label',
-						'wd:'.$wd_id.' schema:description ?description',
-						'wd:'.$wd_id.' wdt:P569 ?dob',
-						'wd:'.$wd_id.' wdt:P19 ?pob',
-						'?pob wdt:P17 ?cob',
-						'wd:'.$wd_id.' wdt:P570 ?dod',
-						'wd:'.$wd_id.' wdt:P20 ?pod',
-						'?pod wdt:P17 ?cod'
-					);
+					'wd:'.$wd_id.' schema:description ?description',
+					'wd:'.$wd_id.' wdt:P569 ?dob',
+					'wd:'.$wd_id.' wdt:P19 ?pob',
+					'?pob wdt:P17 ?cob',
+					'wd:'.$wd_id.' wdt:P570 ?dod',
+					'wd:'.$wd_id.' wdt:P20 ?pod',
+					'?pod wdt:P17 ?cod'
+	  );
 		$select = '';
 		foreach ( array_keys( $property_types ) as $property ) {
 			if ('Label'===$property_types[$property]) {
@@ -292,7 +281,8 @@ class wdtax_person_wikidata extends wdtax_wikidata {
 				'FILTER(LANG(?description) = "en").'.
 				'SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }'.
 			'}';
-  	parent::__construct( $wd_id );
+
+		parent::__construct( $wd_id );
 		$this->set_property( 'dob', 'Year' );
 		$this->set_property( 'dod', 'Year' );
 		$this->set_property( 'pob', 'Label' );

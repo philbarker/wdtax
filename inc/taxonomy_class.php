@@ -154,7 +154,7 @@ class wdtax_taxonomy {
           foreach ( array_keys( $term_meta ) as $key ) {
             print_r( '<b>'.$key.': </b>');
             print_r($term_meta[$key][0]);
-            echo '<br />' ;
+            print_r( '<br />' );
           }
            ?>
         </td>
@@ -183,7 +183,6 @@ class wdtax_taxonomy {
      */
     if( isset( $_POST['wd_id'] ) ) {
       $wd_id = ucfirst( esc_attr( $_POST['wd_id'] ) );
-      update_term_meta( $term_id, 'wd_id', $wd_id );
       $this->fetch_store_wikidata( $wd_id, $term_id );
     }
   }
@@ -228,10 +227,9 @@ class wdtax_taxonomy {
    */
     $keymap = $this->property_key_map;
     $this->delete_term_metadata( $term_id );
-    $wd = new wdtax_wikidata( $wd_id );
-    $wd->store_id( $term_id );
-    $wd->store_term_data( $term_id, $this->id );
-    $wd->store_property( $term_id, 'wd_id', $keymap['wd_id'][0] );
+    $wd = new wdtax_generic_wikidata( $wd_id );
+    $wd->store_term_data( $term_id, $this->id ); //update term name and descr
+    $wd->store_property( $term_id, 'wd_id', $keymap['wd_id'][0]);
     $wd->store_property( $term_id, 'wd_description', $keymap['wd_description'][0] );
     $wd->store_property( $term_id, 'wd_name', $keymap['wd_name'][0] );
     $wd->store_property( $term_id, 'wd_type', $keymap['wd_type'][0] );
@@ -239,7 +237,9 @@ class wdtax_taxonomy {
     if ( 'human' === $wd_type ) {
 //      echo 'we have a human';
 //      add human properties & their types to $wd
-      $wd->reconstruct_human();
+//      $wd->reconstruct_human();
+// try with new object
+      $wd = new wdtax_human_wikidata( $wd_id );
       $wd->store_property( $term_id, 'wd_birth_year', $keymap['wd_birth_year'][0] );
     	$wd->store_property( $term_id, 'wd_death_year', $keymap['wd_death_year'][0] );
     	$wd->store_property( $term_id, 'wd_birth_place', $keymap['wd_birth_place'][0] );
