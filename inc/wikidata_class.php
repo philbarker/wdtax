@@ -37,7 +37,8 @@ abstract class wdtax_wikidata_basics {
 		$this->fetch_wikidata();
 		$this->set_text_property( 'label' );
 		$this->set_text_property( 'description' );
-		$this->fetch_set_type( );
+		$this->set_property( 'type', 'Label' );
+//		$this->fetch_set_type( );
 	}
 	function store_term_data( $term_id, $taxonomy ) {
 		$args = array(
@@ -179,11 +180,11 @@ class wdtax_generic_wikidata extends wdtax_wikidata_basics {
     $property_types = array(
           'label'=>'',
           'description'=>'',
-//					'type'=>'Label'
+					'type'=>'Label'
         );
     $where = array( 'wd:'.$wd_id.' rdfs:label ?label',
     						  'wd:'.$wd_id.' schema:description ?description',
-//									'wd:'.$wd_id.' wdt:P31 ?type'
+									'OPTIONAL { wd:'.$wd_id.' wdt:P31 ?type }'
                 );  //for sparql WHERE clause
     $select = '';   //for sparql SELECT clause
 		foreach ( array_keys( $property_types ) as $property ) {
@@ -202,61 +203,6 @@ class wdtax_generic_wikidata extends wdtax_wikidata_basics {
       '}';
     parent::__construct( $wd_id );
   }
-/*	function reconstruct_human( ) {
-		$wd_id = $this->id;
-		$human_props = array(
-						'dob' => '', // date of birth
-						'pob' => '', // place of birth
-						'cob' => '', // country of birth
-						'dod' => '', // date of death
-						'pod' => '', // place of death
-						'cod' => '' // country of death
-		);
-		$this->properties = array_merge( $this->properties, $human_props);
-		$property_types = array(
-						'label'=>'',
-						'description'=>'',
-						'type'=>'Label',
-						'dob'=>'Year',
-						'pob'=>'Label',
-						'cob'=>'Label',
-						'dod'=>'Year',
-						'pod'=>'Label',
-						'cod'=>'Label'
-		);
-		$where = array( 'wd:'.$wd_id.' rdfs:label ?label',
-						'wd:'.$wd_id.' schema:description ?description',
-						'wd:'.$wd_id.' wdt:P569 ?dob',
-						'wd:'.$wd_id.' wdt:P19 ?pob',
-						'?pob wdt:P17 ?cob',
-						'wd:'.$wd_id.' wdt:P570 ?dod',
-						'wd:'.$wd_id.' wdt:P20 ?pod',
-						'?pod wdt:P17 ?cod'
-    );
-		$select = '';
-		foreach ( array_keys( $property_types ) as $property ) {
-			if ('Label'===$property_types[$property]) {
-				$select = $select.'?'.$property.$property_types[$property].' ';
-			} else {
-				$select = $select.'?'.$property.' ';
-			}
-		}
-		$this->sparqlQuery =
-			'SELECT '.$select.' '.
-			'WHERE {'.implode(' .', $where ).' '.
-				'FILTER(LANG(?label) = "en").'.
-				'FILTER(LANG(?description) = "en").'.
-				'SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }'.
-			'}';
-		$this->fetch_wikidata();
-		$this->set_property( 'dob', 'Year' );
- 		$this->set_property( 'dod', 'Year' );
- 		$this->set_property( 'pob', 'Label' );
- 		$this->set_property( 'cob', 'Label' );
- 		$this->set_property( 'pod', 'Label' );
- 		$this->set_property( 'cod', 'Label' );
-	}
-*/
 }
 
 class wdtax_human_wikidata extends wdtax_wikidata_basics {
