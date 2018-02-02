@@ -142,6 +142,8 @@ abstract class wdtax_wikidata_basics {
 				$this->wikidata = json_decode( $response['body'] );
 		} else {
 			echo 'sorry nothing from wikidata for you';
+			echo '<br>Query: '.$this->sparqlQuery ;
+			echo '<br>Endpoint: '.$this->endpointUrl ;
 		}
 	}
 }
@@ -202,15 +204,15 @@ class wdtax_human_wikidata extends wdtax_wikidata_basics {
 					'pod'=>'Label',
 					'cod'=>'Label'
 		);
-		$where = array( 'wd:'.$wd_id.' rdfs:label ?label',
-					'wd:'.$wd_id.' schema:description ?description',
-					'wd:'.$wd_id.' wdt:P569 ?dob',
-					'wd:'.$wd_id.' wdt:P19 ?pob',
-					'?pob wdt:P17 ?cob',
-					'wd:'.$wd_id.' wdt:P570 ?dod',
-					'wd:'.$wd_id.' wdt:P20 ?pod',
-					'?pod wdt:P17 ?cod'
-	  );
+		$where = "wd:{$wd_id} rdfs:label ?label .
+					    wd:{$wd_id} schema:description ?description .
+							OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
+							OPTIONAL { wd:{$wd_id} wdt:P569 ?dob }
+							OPTIONAL { wd:{$wd_id} wdt:P19 ?pob .
+							           ?pob wdt:P17 ?cob }
+							OPTIONAL { wd:{$wd_id} wdt:P570 ?dod }
+							OPTIONAL { wd:{$wd_id} wdt:P20 ?pod .
+							           ?pod wdt:P17 ?cod } ";
 		$select = '';
 		foreach ( array_keys( $property_types ) as $property ) {
 			if ('Label'===$property_types[$property]) {
@@ -221,7 +223,7 @@ class wdtax_human_wikidata extends wdtax_wikidata_basics {
 		}
 		$this->sparqlQuery =
 			'SELECT '.$select.' '.
-			'WHERE {'.implode(' .', $where ).' '.
+			'WHERE {'.$where.' '.
 				'FILTER(LANG(?label) = "en").'.
 				'FILTER(LANG(?description) = "en").'.
 				'SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }'.
