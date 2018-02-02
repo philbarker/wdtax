@@ -133,7 +133,6 @@ abstract class wdtax_wikidata_basics {
 			return new WP_Error( 'Error', 'No data to store for property: '.$p );
 		}
 	}
-
 	function fetch_wikidata() {
 		$query = urlencode($this->sparqlQuery);
 		$format = 'json';
@@ -145,33 +144,6 @@ abstract class wdtax_wikidata_basics {
 			echo 'sorry nothing from wikidata for you';
 		}
 	}
-	function fetch_set_type() {
-		$wd_id = $this->properties['id'];
-		$typeSparqlQuery = "
-		SELECT ?typeLabel
-		WHERE {
-		  wd:{$wd_id} wdt:P31 ?type
-		  SERVICE wikibase:label {
-		    bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\".
-		  }
-		}
-		";
-		$query = urlencode($typeSparqlQuery);
-		$format = 'json';
-		$queryUrl = $this->endpointUrl.'?query='.$query.'&format='.$format;
-		$response = wp_remote_get( $queryUrl );
-		if ( is_array( $response ) ) {
-				$type_wikidata = json_decode( $response['body'] );
-				if (isset ( $type_wikidata->results->bindings[0]->typeLabel->value ) ) {
-					$this->properties['type'] = $type_wikidata->results->bindings[0]->typeLabel->value;
-				} else {
-					$this->properties['type'] = '';
-				}
-		} else {
-			echo 'sorry nothing from wikidata for you';
-		}
-
-	}
 }
 
 class wdtax_generic_wikidata extends wdtax_wikidata_basics {
@@ -182,10 +154,10 @@ class wdtax_generic_wikidata extends wdtax_wikidata_basics {
           'description'=>'',
 					'type'=>'Label'
         );
-    $where = array( 'wd:'.$wd_id.' rdfs:label ?label',
-    						  'wd:'.$wd_id.' schema:description ?description',
-									'OPTIONAL { wd:'.$wd_id.' wdt:P31 ?type }'
-                );  //for sparql WHERE clause
+    $where = "wd:{$wd_id} rdfs:label ?label.
+    				  wd:{$wd_id} schema:description ?description.
+							OPTIONAL { wd:{$wd_id} wdt:P31 ?type } ";
+              //for sparql WHERE clause
     $select = '';   //for sparql SELECT clause
 		foreach ( array_keys( $property_types ) as $property ) {
 			if ('Label'===$property_types[$property]) {
@@ -196,7 +168,7 @@ class wdtax_generic_wikidata extends wdtax_wikidata_basics {
 		}
     $this->sparqlQuery =
       'SELECT '.$select.' '.
-      'WHERE {'.implode(' .', $where ).' '.
+      'WHERE {'.$where.' '.
       'FILTER(LANG(?label) = "en").'.
       'FILTER(LANG(?description) = "en").'.
       'SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }'.
