@@ -14,9 +14,7 @@
 
 get_header();
 $term_id = get_queried_object_id();
-$term_meta = get_term_meta( $term_id );
 global $wdtax_about_taxonomy; //instance of object from inc/taxonomy_class.php
-$keymap = $wdtax_about_taxonomy->property_map;
 ?>
 
 	<div id="primary" class="content-area"
@@ -27,18 +25,13 @@ $keymap = $wdtax_about_taxonomy->property_map;
 				<?php
 					echo $wdtax_about_taxonomy->schema_text( $term_id, 'wd_name',
 					                                         $tag='h1',
-																									 $class='page-title',
-																								   $before='About '
+																									 $class='page-title'
 																								 );
 					echo $wdtax_about_taxonomy->schema_text( $term_id, 'wd_description',
 					                                         $tag='div',
 																									 $class='taxonomy-description'
 																								 );
-					foreach ( array_keys( $term_meta ) as $key ) {
-						print_r( '<b>'.$keymap[$key][1].': </b>');
-						print_r('<span property="'.$keymap[$key][2].'">'.$term_meta[$key][0].'</span>');
-						echo '<br />' ;
-					}
+					$wdtax_about_taxonomy->list_all_schema( $term_id );
 				?>
 			</header><!-- .page-header -->
 

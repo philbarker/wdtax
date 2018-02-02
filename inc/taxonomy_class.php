@@ -266,30 +266,56 @@ class wdtax_taxonomy {
   }
   function schema_text( $term_id, $p,
                         $tag='span', $class=null,
-                        $before=null, $after=null) {
-    $term_meta = get_term_meta( $term_id );
-    if ( isset( $tag ) ) {
+                        $before=null, $after=null ) {
+    $property_value = get_term_meta( $term_id, $p, true );
+    $schema_property = $this->property_map[$p][2];
+    $tag = strtolower( $tag );
+    if ( 'meta' == $tag ) {
+      if (  isset( $schema_property ) ) {
+        $opentag = "<meta property=\"{$schema_property}\" content=\"";
+        $closetag = '" />';
+      } else {
+        $opentag = '<meta content="';
+        $closetag = '" />';
+      }
+    } elseif ( ( 'link' === $tag ) || ( 'a'===$tag ) ) {
+      if ( isset( $schema_property ) ) {
+        $schema_property = urlencode( $schema_property );
+        $opentag = "<{$tag} rel=\"{$schema_property}\" href=\"";
+        $closetag = '" />';
+      } else {
+        $opentag = '<'.$tag.' href="';
+        $closetag = '" />';
+      }
+    } elseif ( isset( $tag ) ) {
       $closetag = '</'.$tag.'>';
       $opentag = '<'.$tag;
       if ( isset( $class ) ) {
         $opentag = $opentag.' class='.$class.' ';
       }
-      if ( isset( $this->property_map[$p][2] ) ) {
-        $opentag = $opentag.' property="'.$this->property_map[$p][2].'" ';
+      if ( isset( $schema_property ) ) {
+        $opentag = $opentag.' property="'.$schema_property.'" ';
       }
       $opentag = $opentag.' >';
     } else {
       $closetag = ' ';
       $opentag = ' ';
     }
-    if (  isset( $term_meta[$p] ) ) {
-      return $opentag.$before.$term_meta[$p][0].$after.$closetag;
+    if (  isset( $property_value ) ) {
+      return $opentag.$before.$property_value.$after.$closetag;
     } else {
       return '<'.$tag.' class="'.$class.'" >'.$before.'no data'.$after.'</'.$tag.'>';
     }
+  }
+  function list_all_schema( $term_id ) {
+    $term_meta = get_term_meta( $term_id );
+    print_r( '<ul>' );
+    foreach ( array_keys( $term_meta ) as $key ) {
+      print_r( '<li>'.$this->property_map[$key][1].': ');
+      print_r( $this->schema_text( $term_id, $key ) );
+      print_r( '</li>' );
+    }
+    print_r( '</ul>' );
 
   }
-
-
-
 }
