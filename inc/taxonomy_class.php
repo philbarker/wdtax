@@ -33,10 +33,11 @@ class wdtax_taxonomy {
   protected $args;   //argument array of taxonomy
   //next: keys used for storing wikidata properties as term metadata mapped
   //to key in $taxonomy->properties array, human label, schema id, ?wd id?...
-  public $property_key_map = array(
+  public $property_map = array(
     'wd_id' => ['id', 'Wikidata ID', ''],
     'wd_description' => ['description', 'Description', 'description'],
     'wd_name' => ['label', 'Name', 'name'],
+    'wd_image' => ['image', 'Image', 'image'],
     'wd_type' => ['type', 'Type', ''],
     'wd_birth_year' => ['dob', 'Year of birth', 'birthDate'],
     'wd_death_year' => ['dod', 'Year of death', 'deathDate'],
@@ -45,7 +46,8 @@ class wdtax_taxonomy {
     'wd_death_place' => ['pod', 'Place of death', 'deathPlace'],
     'wd_death_country' => ['cod', 'Country of death', 'deathPlace']
   );
-  public $type_key_map = array(
+  // $type map maps wikidata class labels to schema Types
+  public $type_map = array(
     'human' => 'Person'
   );
 
@@ -225,13 +227,14 @@ class wdtax_taxonomy {
   /* will fetch wikidata for $wd_id, which should be wikidata identifier (Q#)
    * and will store relevant data as proerties/metadata for taxonomy term
    */
-    $keymap = $this->property_key_map;
+    $keymap = $this->property_map;
     $this->delete_term_metadata( $term_id );
     $wd = new wdtax_generic_wikidata( $wd_id );
     $wd->store_term_data( $term_id, $this->id ); //update term name and descr
     $wd->store_property( $term_id, 'wd_id', $keymap['wd_id'][0]);
     $wd->store_property( $term_id, 'wd_description', $keymap['wd_description'][0] );
     $wd->store_property( $term_id, 'wd_name', $keymap['wd_name'][0] );
+    $wd->store_property( $term_id, 'wd_image', $keymap['wd_image'][0] );
     $wd->store_property( $term_id, 'wd_type', $keymap['wd_type'][0] );
     $wd_type = get_term_meta( $term_id, 'wd_type', true );
     if ( 'human' === $wd_type ) {
@@ -250,4 +253,43 @@ class wdtax_taxonomy {
 //     echo 'dont know this type';
     }
   }
+  function schema_type( $term_id ) {
+    $term_meta = get_term_meta( $term_id );
+    if ( isset( $term_meta['wd_type'] )
+      && isset( $this->type_map[$term_meta['wd_type'][0]] )
+      ) {
+      $type = $this->type_map[$term_meta['wd_type'][0]];
+      return ' typeof="'.$type.'" ';
+    } else {
+      return ' typeof="Thing" ';
+    }
+  }
+  function schema_text( $term_id, $p,
+                        $tag='span', $class=null,
+                        $before=null, $after=null) {
+    $term_meta = get_term_meta( $term_id );
+    if ( isset( $tag ) ) {
+      $closetag = '</'.$tag.'>';
+      $opentag = '<'.$tag;
+      if ( isset( $class ) ) {
+        $opentag = $opentag.' class='.$class.' ';
+      }
+      if ( isset( $this->property_map[$p][2] ) ) {
+        $opentag = $opentag.' property="'.$this->property_map[$p][2].'" ';
+      }
+      $opentag = $opentag.' >';
+    } else {
+      $closetag = ' ';
+      $opentag = ' ';
+    }
+    if (  isset( $term_meta[$p] ) ) {
+      return $opentag.$before.$term_meta[$p][0].$after.$closetag;
+    } else {
+      return '<'.$tag.' class="'.$class.'" >'.$before.'no data'.$after.'</'.$tag.'>';
+    }
+
+  }
+
+
+
 }

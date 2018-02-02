@@ -16,25 +16,29 @@ get_header();
 $term_id = get_queried_object_id();
 $term_meta = get_term_meta( $term_id );
 global $wdtax_about_taxonomy; //instance of object from inc/taxonomy_class.php
-$keymap = $wdtax_about_taxonomy->property_key_map;
-$typemap = $wdtax_about_taxonomy->type_key_map; //maps wikidata types to schema types
-$type = $typemap[$term_meta['wd_type'][0]]
+$keymap = $wdtax_about_taxonomy->property_map;
 ?>
 
 	<div id="primary" class="content-area"
 	     vocab="http://schema.org/"
-			 typeof=<?php echo $type ?>
+			 <?php echo $wdtax_about_taxonomy->schema_type( $term_id ) ?> >
 		<main id="main" class="site-main" role="main">
 			<header class="page-header">
 				<?php
-					the_archive_title( '<h1 class="page-title">', '</h1>' );
-					the_archive_description( '<div class="taxonomy-description">', '</div>' );
+					echo $wdtax_about_taxonomy->schema_text( $term_id, 'wd_name',
+					                                         $tag='h1',
+																									 $class='page-title',
+																								   $before='About '
+																								 );
+					echo $wdtax_about_taxonomy->schema_text( $term_id, 'wd_description',
+					                                         $tag='div',
+																									 $class='taxonomy-description'
+																								 );
 					foreach ( array_keys( $term_meta ) as $key ) {
 						print_r( '<b>'.$keymap[$key][1].': </b>');
 						print_r('<span property="'.$keymap[$key][2].'">'.$term_meta[$key][0].'</span>');
 						echo '<br />' ;
 					}
-print_r($keymap);
 				?>
 			</header><!-- .page-header -->
 
