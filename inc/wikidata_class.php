@@ -26,6 +26,7 @@ abstract class wdtax_wikidata_basics {
 	public $properties = array( 'id' =>'',
 															'label' =>'',
                               'description' => '',
+															'image' => '',
 															'type' =>''
 														);
 	public $endpointUrl = 'https://query.wikidata.org/sparql';
@@ -37,6 +38,7 @@ abstract class wdtax_wikidata_basics {
 		$this->fetch_wikidata();
 		$this->set_text_property( 'label' );
 		$this->set_text_property( 'description' );
+		$this->set_text_property( 'image' );
 		$this->set_property( 'type', 'Label' );
 //		$this->fetch_set_type( );
 	}
@@ -154,11 +156,13 @@ class wdtax_generic_wikidata extends wdtax_wikidata_basics {
     $property_types = array(
           'label'=>'',
           'description'=>'',
+					'image' => '',
 					'type'=>'Label'
         );
     $where = "wd:{$wd_id} rdfs:label ?label.
     				  wd:{$wd_id} schema:description ?description.
-							OPTIONAL { wd:{$wd_id} wdt:P31 ?type } ";
+							OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
+							OPTIONAL { wd:{$wd_id} wdt:P18 ?image } ";
               //for sparql WHERE clause
     $select = '';   //for sparql SELECT clause
 		foreach ( array_keys( $property_types ) as $property ) {
