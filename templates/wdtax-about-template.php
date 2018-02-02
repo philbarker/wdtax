@@ -14,24 +14,25 @@
 
 get_header();
 $term_id = get_queried_object_id();
+global $wp;
 global $wdtax_about_taxonomy; //instance of object from inc/taxonomy_class.php
 ?>
-
 	<div id="primary" class="content-area"
 	     vocab="http://schema.org/"
+			 resource="<?php echo home_url( $wp->request ).'#id'; ?>"
 			 <?php echo $wdtax_about_taxonomy->schema_type( $term_id ) ?> >
 		<main id="main" class="site-main" role="main">
 			<header class="page-header">
 				<?php
-					echo $wdtax_about_taxonomy->schema_text( $term_id, 'wd_name',
-					                                         $tag='h1',
-																									 $class='page-title'
-																								 );
+				  $args = array('tag'=>'h1', 'class'=>'page-title');
+					echo $wdtax_about_taxonomy->schema_text( $term_id, 'wd_name', $args );
+          echo '<div class="taxonomy-description" > ';
+					$args = array('after'=>'. ');
 					echo $wdtax_about_taxonomy->schema_text( $term_id, 'wd_description',
-					                                         $tag='div',
-																									 $class='taxonomy-description'
-																								 );
-					$wdtax_about_taxonomy->list_all_schema( $term_id );
+					                                         $args);
+					echo $wdtax_about_taxonomy->schema_birth_details( $term_id );
+					echo $wdtax_about_taxonomy->schema_death_details( $term_id );
+					echo '</div>';
 				?>
 			</header><!-- .page-header -->
 

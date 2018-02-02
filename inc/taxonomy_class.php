@@ -266,9 +266,27 @@ class wdtax_taxonomy {
       return ' typeof="Thing" ';
     }
   }
-  function schema_text( $term_id, $p,
-                        $tag='span', $class=null,
-                        $before=null, $after=null ) {
+  function schema_text( $term_id, $p, $args=array() ) {
+    if ( isset( $args['tag'] ) ) {
+      $tag = $args['tag'];
+    } else {
+      $tag = 'span';
+    }
+    if ( isset( $args['class'] ) ) {
+      $class = $args['class'];
+    } else {
+      $class = null;
+    }
+    if ( isset( $args['before'] ) ) {
+      $before = $args['before'];
+    } else {
+      $before = null;
+    }
+    if ( isset( $args['after'] ) ) {
+      $after = $args['after'];
+    } else {
+      $after = '';
+    }
     $property_value = get_term_meta( $term_id, $p, true );
     $schema_property = $this->property_map[$p][2];
     $tag = strtolower( $tag );
@@ -319,6 +337,36 @@ class wdtax_taxonomy {
       unset( $key );
     }
     print_r( '</ul>' );
-
   }
+  function schema_birth_details ( $term_id ) {
+    $term_meta = get_term_meta( $term_id );
+    $return_val = '';
+    if ( isset( $term_meta['wd_birth_year'] ) ) {
+      $schema_dob = $this->schema_text( $term_id, 'wd_birth_year' );
+      $return_val = $return_val.' Born '.$schema_dob;
+    }
+    if ( isset( $term_meta['wd_birth_place'] ) ) {
+      $cob = get_term_meta( $term_id, 'wd_birth_country', true);
+      $args = array( 'before'=>' ', 'after'=>' ('.$cob.')' );
+      $schema_pob = $this->schema_text( $term_id, 'wd_birth_place', $args );
+      $return_val = $return_val.' '.$schema_pob.'.';
+    }
+    return $return_val;
+  }
+  function schema_death_details ( $term_id ) {
+    $term_meta = get_term_meta( $term_id );
+    $return_val = '';
+    if ( isset( $term_meta['wd_death_year'] ) ) {
+      $schema_dod = $this->schema_text( $term_id, 'wd_death_year' );
+      $return_val = $return_val.' Died '.$schema_dod;
+    }
+    if ( isset( $term_meta['wd_death_place'] ) ) {
+      $cod = get_term_meta( $term_id, 'wd_death_country', true);
+      $args = array( 'before'=>' ', 'after'=>' ('.$cod.')' );
+      $schema_pod = $this->schema_text( $term_id, 'wd_death_place', $args );
+      $return_val = $return_val.' '.$schema_pod.'.';
+    }
+    return $return_val;
+  }
+
 }
