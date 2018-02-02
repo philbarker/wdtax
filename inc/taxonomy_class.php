@@ -11,30 +11,30 @@
 defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
 
 class wdtax_taxonomy {
-/* class for creating custom taxonomies with admin menus that can take
- * data from wikidata and can be used to provide linked data with schema.org
- * properties such as schema:about, scheam:mentions...
- *
- * After instatiating, the init and and admin init methos should be called to
- * hook various functions to init and admin_init.
- *
- * methods
- * init() : hooks into various init actions
- * register_wdtaxonomy() : registers the taxonomy (called by init)
- * add_form_fields() : fields for add new term form (called by admin_init)
- * edit_form_fields( $wd_term ) : fields for edit term form (called by
- *     admin_init)
- * save_meta() : saves term metadata (called by admin_init)
- * fetch_store_wikidata( $term ) : gets and stores wikidata for
- *           $term in the taxonomy
- */
+ /* class for creating custom taxonomies with admin menus that can take
+  * data from wikidata and can be used to provide linked data with schema.org
+  * properties such as schema:about, scheam:mentions...
+  *
+  * After instatiating, the init and and admin init methos should be called to
+  * hook various functions to init and admin_init.
+  *
+  * methods
+  * init() : hooks into various init actions
+  * register_wdtaxonomy() : registers the taxonomy (called by init)
+  * add_form_fields() : fields for add new term form (called by admin_init)
+  * edit_form_fields( $wd_term ) : fields for edit term form (called by
+  *     admin_init)
+  * save_meta() : saves term metadata (called by admin_init)
+  * fetch_store_wikidata( $term ) : gets and stores wikidata for
+  *           $term in the taxonomy
+  */
   protected $id;     //id of the taxonomy
   protected $type;   //types of post to which taxonomy apllies
   protected $args;   //argument array of taxonomy
   //next: keys used for storing wikidata properties as term metadata mapped
   //to key in $taxonomy->properties array, human label, schema id, ?wd id?...
   public $property_map = array(
-    'wd_id' => ['id', 'Wikidata ID', ''],
+    'wd_id' => ['id', 'Wikidata ID', 'sameAs'],
     'wd_description' => ['description', 'Description', 'description'],
     'wd_name' => ['label', 'Name', 'name'],
     'wd_image' => ['image', 'Image', 'image'],
@@ -108,7 +108,7 @@ class wdtax_taxonomy {
     add_action( $hook, $action, 10, 2 );
     $hook = 'create_'.$this->id;
     $action = array($this, 'on_create_term');
-//    $action = array($this, 'save_meta');
+    //$action = array($this, 'save_meta');
     add_action( $hook, $action, 10, 2 );
     //get and store metadata from wikidata before loading edit form
     $hook = $this->id.'_pre_edit_form';
@@ -190,27 +190,27 @@ class wdtax_taxonomy {
     }
   }
   function on_edit_term( $term_id ) {
-  /*Hooked into edit term for this taxonomy.
-   *Don't save metadata that comes from wikidata when term is editted
-   *It is fetched and saved on pre-loading the term edit form, and then
-   *edit form is reloaded on update.
-   *If you do save metadata from wikidata here, it will call the edit term
-   *events, including this method. Which would then call the edit term
-   *events, including this method. Which would then call the edit term
-   *events, including this method. Which would then call the edit term
-   *events, including this method. Which would then call the edit term
-   */
+   /*Hooked into edit term for this taxonomy.
+    *Don't save metadata that comes from wikidata when term is editted
+    *It is fetched and saved on pre-loading the term edit form, and then
+    *edit form is reloaded on update.
+    *If you do save metadata from wikidata here, it will call the edit term
+    *events, including this method. Which would then call the edit term
+    *events, including this method. Which would then call the edit term
+    *events, including this method. Which would then call the edit term
+    *events, including this method. Which would then call the edit term
+    */
     if( isset( $_POST['wd_id'] ) ) {
       $wd_id = ucfirst( esc_attr($_POST['wd_id']) );
       update_term_meta( $term_id, 'wd_id', $wd_id );
     }
   }
   function pre_edit_form( $term ) {
-  /* If term has wd_id property will fetch metadata from wikidata
-   * & store as term metadata, (which is displayed in edit form)
-   * hooked in to {$taxonomy}_pre_edit_form, runs before edit form is loaded
-   * see on_edit_term for why this is needed
-   */
+   /* If term has wd_id property will fetch metadata from wikidata
+    * & store as term metadata, (which is displayed in edit form)
+    * hooked in to {$taxonomy}_pre_edit_form, runs before edit form is loaded
+    * see on_edit_term for why this is needed
+    */
   	$term_id = $term->term_id;
     $wd_id = ucfirst( get_term_meta( $term_id, 'wd_id', true ) );
    	$args = array();
@@ -226,9 +226,9 @@ class wdtax_taxonomy {
     return;
   }
   function fetch_store_wikidata( $wd_id, $term_id ) {
-  /* will fetch wikidata for $wd_id, which should be wikidata identifier (Q#)
-   * and will store relevant data as proerties/metadata for taxonomy term
-   */
+   // will fetch wikidata for $wd_id, which should be wikidata identifier (Q#)
+   // and will store relevant data as proerties/metadata for taxonomy term
+   //
     $keymap = $this->property_map;
     $this->delete_term_metadata( $term_id );
     $wd = new wdtax_generic_wikidata( $wd_id );
@@ -240,10 +240,6 @@ class wdtax_taxonomy {
     $wd->store_property( $term_id, 'wd_type', $keymap['wd_type'][0] );
     $wd_type = get_term_meta( $term_id, 'wd_type', true );
     if ( 'human' === $wd_type ) {
-//      echo 'we have a human';
-//      add human properties & their types to $wd
-//      $wd->reconstruct_human();
-// try with new object
       $wd = new wdtax_human_wikidata( $wd_id );
       $wd->store_property( $term_id, 'wd_birth_year', $keymap['wd_birth_year'][0] );
     	$wd->store_property( $term_id, 'wd_death_year', $keymap['wd_death_year'][0] );
@@ -252,7 +248,6 @@ class wdtax_taxonomy {
     	$wd->store_property( $term_id, 'wd_death_place', $keymap['wd_death_place'][0] );
     	$wd->store_property( $term_id, 'wd_death_country', $keymap['wd_death_country'][0] );
     } else {
-//     echo 'dont know this type';
     }
   }
   function schema_type( $term_id ) {
@@ -287,9 +282,9 @@ class wdtax_taxonomy {
     } else {
       $after = '';
     }
+    $tag = strtolower( $tag );
     $property_value = get_term_meta( $term_id, $p, true );
     $schema_property = $this->property_map[$p][2];
-    $tag = strtolower( $tag );
     if ( 'meta' == $tag ) {
       if (  isset( $schema_property ) ) {
         $opentag = "<meta property=\"{$schema_property}\" content=\"";
@@ -368,5 +363,18 @@ class wdtax_taxonomy {
     }
     return $return_val;
   }
+  function schema_sameas_wd( $term_id ) {
+    $term_meta = get_term_meta( $term_id );
+    $base_url = 'https://www.wikidata.org/entity/';
+    if ( isset( $term_meta['wd_id'] ) ) {
+      $args = array(
+        'tag'=>'link',
+        'before'=>$base_url
+      );
+      return $this->schema_text( $term_id, 'wd_id', $args );
+    } else {
+      return '';
+    }
 
+  }
 }

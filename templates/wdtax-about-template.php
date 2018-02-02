@@ -24,8 +24,9 @@ global $wdtax_about_taxonomy; //instance of object from inc/taxonomy_class.php
 		<main id="main" class="site-main" role="main">
 			<header class="page-header">
 				<?php
-				  $args = array('tag'=>'h1', 'class'=>'page-title');
-					echo $wdtax_about_taxonomy->schema_text( $term_id, 'wd_name', $args );
+				  echo '<h1 class="page-title">Pages about: ';
+					echo $wdtax_about_taxonomy->schema_text( $term_id, 'wd_name' );
+					echo '</h1>';
           echo '<div class="taxonomy-description" > ';
 					$args = array('after'=>'. ');
 					echo $wdtax_about_taxonomy->schema_text( $term_id, 'wd_description',
@@ -33,6 +34,7 @@ global $wdtax_about_taxonomy; //instance of object from inc/taxonomy_class.php
 					echo $wdtax_about_taxonomy->schema_birth_details( $term_id );
 					echo $wdtax_about_taxonomy->schema_death_details( $term_id );
 					echo '</div>';
+					echo $wdtax_about_taxonomy->schema_sameas_wd( $term_id );
 				?>
 			</header><!-- .page-header -->
 
@@ -41,9 +43,11 @@ global $wdtax_about_taxonomy; //instance of object from inc/taxonomy_class.php
 			while ( have_posts() ) : the_post();
 
 ?>
-<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
+<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>
+	property="subjectOf" resource="<?php echo( esc_url( get_permalink() ) )?>"
+	typeof="WebPage">
 	<header class="entry-header">
-		<?php the_title( sprintf( '<h3 ><a href="%s" rel="bookmark">', esc_url( get_permalink() ) ), '</a></h3>' ); ?>
+		<?php the_title( sprintf( '<h3 property="name"><a href="%s">', esc_url( get_permalink() ) ), '</a></h3>' ); ?>
 	</header><!-- .entry-header -->
 
 	<?php the_excerpt(); ?>
