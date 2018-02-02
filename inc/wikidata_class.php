@@ -230,11 +230,8 @@ class wdtax_human_wikidata extends wdtax_wikidata_basics {
 			'}';
 
 		parent::__construct( $wd_id );
-		$this->set_property( 'dob', 'Year' );
-		$this->set_property( 'dod', 'Year' );
-		$this->set_property( 'pob', 'Label' );
-		$this->set_property( 'cob', 'Label' );
-		$this->set_property( 'pod', 'Label' );
-		$this->set_property( 'cod', 'Label' );
+		foreach ( array_keys( $property_types ) as $property ) {
+			$this->set_property( $property, $property_types[$property] );
+		}
 	}
 }
