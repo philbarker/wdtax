@@ -171,6 +171,7 @@ class wdtax_generic_wikidata extends wdtax_wikidata_basics {
 			} else {
 				$select = $select.'?'.$property.' ';
 			}
+			unset( $property );
 		}
     $this->sparqlQuery =
       'SELECT '.$select.' '.
@@ -224,6 +225,7 @@ class wdtax_human_wikidata extends wdtax_wikidata_basics {
 			} else {
 				$select = $select.'?'.$property.' ';
 			}
+			unset( $property );
 		}
 		$this->sparqlQuery =
 			'SELECT '.$select.' '.
@@ -236,6 +238,7 @@ class wdtax_human_wikidata extends wdtax_wikidata_basics {
 		parent::__construct( $wd_id );
 		foreach ( array_keys( $property_types ) as $property ) {
 			$this->set_property( $property, $property_types[$property] );
+			unset( $property );
 		}
 	}
 }

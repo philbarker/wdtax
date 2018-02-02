@@ -157,6 +157,7 @@ class wdtax_taxonomy {
             print_r( '<b>'.$key.': </b>');
             print_r($term_meta[$key][0]);
             print_r( '<br />' );
+            unset( $key );
           }
            ?>
         </td>
@@ -220,6 +221,7 @@ class wdtax_taxonomy {
   function delete_term_metadata( $term_id ) {
     foreach ( array_keys( get_term_meta( $term_id ) ) as $key ) {
       delete_term_meta( $term_id, $key );
+      unset( $key );
     }
     return;
   }
@@ -314,6 +316,7 @@ class wdtax_taxonomy {
       print_r( '<li>'.$this->property_map[$key][1].': ');
       print_r( $this->schema_text( $term_id, $key ) );
       print_r( '</li>' );
+      unset( $key );
     }
     print_r( '</ul>' );
 
