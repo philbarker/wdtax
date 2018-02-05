@@ -52,8 +52,6 @@ global $wdtax_about_taxonomy; //instance of object from inc/taxonomy_class.php
 
 	<?php the_excerpt(); ?>
 
-	<?php twentysixteen_post_thumbnail(); ?>
-
 </article><!-- #post-## -->
 <?php
 			endwhile;
