@@ -137,6 +137,7 @@ class wdtax_taxonomy {
     $wd_name = get_term_meta( $term_id, 'wd_name', true );
     $wd_description = get_term_meta( $term_id, 'wd_description', true );
     $term_meta = get_term_meta( $term->term_id );
+    echo $this->id;
     ?>
     <tr class="form-field term-group-wrap">
         <th scope="row">

@@ -21,3 +21,8 @@ $wdtax_about_taxonomy = new wdtax_taxonomy('wdtax_about',
 																 'About Term',
 																 'About Terms');
 $wdtax_about_taxonomy->init(); //registers methods with various init hooks
+$wdtax_mentions_taxonomy = new wdtax_taxonomy('wdtax_mentions',
+		                             'post',
+																 'Mentions Term',
+																 'Mentions Terms');
+$wdtax_mentions_taxonomy->init(); //registers methods with various init hooks
