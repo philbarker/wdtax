@@ -44,10 +44,14 @@ class wdtax_taxonomy {
     'wd_birth_place' =>['pob', 'Place of birth', 'birthPlace'],
     'wd_birth_country' => ['cob', 'Country of birth', 'birthPlace'],
     'wd_death_place' => ['pod', 'Place of death', 'deathPlace'],
-    'wd_death_country' => ['cod', 'Country of death', 'deathPlace']
+    'wd_death_country' => ['cod', 'Country of death', 'deathPlace'],
+    'wd_viaf' => ['viaf', 'VIAF', 'sameAs'],
+    'wd_isni' => ['isni', 'ISNI', 'sameAs']
   );
-  // $type map maps wikidata class labels to schema Types
+  // $type map maps wikidata class labels to schema Types, most specific first
   public $type_map = array(
+    'book' => 'Book',
+    'creative work' => 'CreativeWork',
     'human' => 'Person'
   );
 
@@ -230,28 +234,31 @@ class wdtax_taxonomy {
    // will fetch wikidata for $wd_id, which should be wikidata identifier (Q#)
    // and will store relevant data as proerties/metadata for taxonomy term
    //
-    $keymap = $this->property_map;
+    $p_map = $this->property_map;
     $this->delete_term_metadata( $term_id );
     $wd = new wdtax_generic_wikidata( $wd_id );
     $wd->store_term_data( $term_id, $this->id ); //update term name and descr
-    $wd->store_property( $term_id, 'wd_id', $keymap['wd_id'][0]);
-    $wd->store_property( $term_id, 'wd_description', $keymap['wd_description'][0] );
-    $wd->store_property( $term_id, 'wd_name', $keymap['wd_name'][0] );
-    $wd->store_property( $term_id, 'wd_image', $keymap['wd_image'][0] );
-    $wd->store_property( $term_id, 'wd_type', $keymap['wd_type'][0] );
+    $wd->store_property( $term_id, 'wd_id', $p_map['wd_id'][0]);
+    $wd->store_property( $term_id, 'wd_description', $p_map['wd_description'][0] );
+    $wd->store_property( $term_id, 'wd_name', $p_map['wd_name'][0] );
+    $wd->store_property( $term_id, 'wd_image', $p_map['wd_image'][0] );
+    $wd->store_property( $term_id, 'wd_type', $p_map['wd_type'][0] );
     $wd_type = get_term_meta( $term_id, 'wd_type', true );
     if ( 'human' === $wd_type ) {
       $wd = new wdtax_human_wikidata( $wd_id );
-      $wd->store_property( $term_id, 'wd_birth_year', $keymap['wd_birth_year'][0] );
-    	$wd->store_property( $term_id, 'wd_death_year', $keymap['wd_death_year'][0] );
-    	$wd->store_property( $term_id, 'wd_birth_place', $keymap['wd_birth_place'][0] );
-    	$wd->store_property( $term_id, 'wd_birth_country', $keymap['wd_birth_country'][0] );
-    	$wd->store_property( $term_id, 'wd_death_place', $keymap['wd_death_place'][0] );
-    	$wd->store_property( $term_id, 'wd_death_country', $keymap['wd_death_country'][0] );
+      $wd->store_property( $term_id, 'wd_birth_year', $p_map['wd_birth_year'][0] );
+    	$wd->store_property( $term_id, 'wd_death_year', $p_map['wd_death_year'][0] );
+    	$wd->store_property( $term_id, 'wd_birth_place', $p_map['wd_birth_place'][0] );
+    	$wd->store_property( $term_id, 'wd_birth_country', $p_map['wd_birth_country'][0] );
+    	$wd->store_property( $term_id, 'wd_death_place', $p_map['wd_death_place'][0] );
+      $wd->store_property( $term_id, 'wd_death_country', $p_map['wd_death_country'][0] );
+      $wd->store_property( $term_id, 'wd_viaf', $p_map['wd_viaf'][0] );
+      $wd->store_property( $term_id, 'wd_isni', $p_map['wd_isni'][0] );
     } else {
     }
   }
   function schema_type( $term_id ) {
+    //echo the value of schema type that wd_type maps to as value for @typeof
     $term_meta = get_term_meta( $term_id );
     if ( isset( $term_meta['wd_type'] )
       && isset( $this->type_map[$term_meta['wd_type'][0]] )
@@ -263,8 +270,12 @@ class wdtax_taxonomy {
     }
   }
   function schema_text( $term_id, $p, $args=array() ) {
+    // echo property $p of a term as schema markup for property to which $p maps
+    // in $property_map, in html tag $args['tag'] or span as defaul, with
+    // text $args['before'|'after'] before or after $p. $args['class'] can be
+    // used for @class of html element
     if ( isset( $args['tag'] ) ) {
-      $tag = $args['tag'];
+      $tag = strtolower( $args['tag'] );
     } else {
       $tag = 'span';
     }
@@ -283,7 +294,6 @@ class wdtax_taxonomy {
     } else {
       $after = '';
     }
-    $tag = strtolower( $tag );
     $property_value = get_term_meta( $term_id, $p, true );
     $schema_property = $this->property_map[$p][2];
     if ( 'meta' == $tag ) {
@@ -376,6 +386,31 @@ class wdtax_taxonomy {
     } else {
       return '';
     }
-
+  }
+  function schema_sameas_viaf( $term_id ) {
+    $term_meta = get_term_meta( $term_id );
+    $base_url = 'https://viaf.org/viaf/';
+    if ( isset( $term_meta['wd_viaf'] ) ) {
+      $args = array(
+        'tag'=>'link',
+        'before'=>$base_url
+      );
+      return $this->schema_text( $term_id, 'wd_viaf', $args );
+    } else {
+      return '';
+    }
+  }
+  function schema_sameas_isni( $term_id ) {
+    $term_meta = get_term_meta( $term_id );
+    $base_url = 'http://www.isni.org/';
+    if ( isset( $term_meta['wd_isni'] ) ) {
+      $args = array(
+        'tag'=>'link',
+        'before'=>$base_url
+      );
+      return $this->schema_text( $term_id, 'wd_isni', $args );
+    } else {
+      return '';
+    }
   }
 }

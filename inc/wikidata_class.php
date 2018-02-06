@@ -40,7 +40,6 @@ abstract class wdtax_wikidata_basics {
 		$this->set_text_property( 'description' );
 		$this->set_text_property( 'image' );
 		$this->set_property( 'type', 'Label' );
-//		$this->fetch_set_type( );
 	}
 	function store_term_data( $term_id, $taxonomy ) {
 		$args = array(
@@ -194,7 +193,9 @@ class wdtax_human_wikidata extends wdtax_wikidata_basics {
 					'cob' => '', // country of birth
 					'dod' => '', // date of death
 					'pod' => '', // place of death
-					'cod' => '' // country of death
+					'cod' => '', // country of death
+					'viaf' => '', // VIAF id
+					'isni' => '', // ISNI id
 	);
   public function __construct( $wd_id ) {
 		$this->properties = array_merge( $this->properties, $this->human_props);
@@ -207,7 +208,9 @@ class wdtax_human_wikidata extends wdtax_wikidata_basics {
 					'cob'=>'Label',
 					'dod'=>'Year',
 					'pod'=>'Label',
-					'cod'=>'Label'
+					'cod'=>'Label',
+					'viaf' => '',
+					'isni' => ''
 		);
 		$where = "wd:{$wd_id} rdfs:label ?label .
 					    wd:{$wd_id} schema:description ?description .
@@ -217,7 +220,10 @@ class wdtax_human_wikidata extends wdtax_wikidata_basics {
 							           ?pob wdt:P17 ?cob }
 							OPTIONAL { wd:{$wd_id} wdt:P570 ?dod }
 							OPTIONAL { wd:{$wd_id} wdt:P20 ?pod .
-							           ?pod wdt:P17 ?cod } ";
+							           ?pod wdt:P17 ?cod }
+  						OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }
+							OPTIONAL { wd:{$wd_id} wdt:P213 ?isni }";
+
 		$select = '';
 		foreach ( array_keys( $property_types ) as $property ) {
 			if ('Label'===$property_types[$property]) {

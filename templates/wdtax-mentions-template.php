@@ -35,6 +35,8 @@ global $wdtax_mentions_taxonomy; //instance of object from inc/taxonomy_class.ph
 					echo $wdtax_mentions_taxonomy->schema_death_details( $term_id );
 					echo '</div>';
 					echo $wdtax_mentions_taxonomy->schema_sameas_wd( $term_id );
+					echo $wdtax_mentions_taxonomy->schema_sameas_viaf( $term_id );
+					echo $wdtax_mentions_taxonomy->schema_sameas_isni( $term_id );
 				?>
 			</header><!-- .page-header -->
 
@@ -51,7 +53,7 @@ global $wdtax_mentions_taxonomy; //instance of object from inc/taxonomy_class.ph
 	</header><!-- .entry-header -->
 
 	<?php the_excerpt(); ?>
-  <link property="mentions" href="<?php echo home_url( $wp->request ).'#id'; ?>" /> 
+  <link property="mentions" href="<?php echo home_url( $wp->request ).'#id'; ?>" />
 </article><!-- #post-## -->
 <?php
 			endwhile;
