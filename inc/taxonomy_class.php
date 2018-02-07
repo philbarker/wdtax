@@ -286,7 +286,7 @@ class wdtax_taxonomy {
     $props = $this->generic_properties;
     $types = $this->generic_property_types;
     $this->delete_term_metadata( $term_id );
-    $wd = new wdtax_generic_wikidata( $wd_id, $props, $types );
+    $wd = new wdtax_generic_wikidata( $wd_id, $types );
     $wd->store_term_data( $term_id, $this->id ); //update term name and descr
     $wd_type = $wd->properties['type'];
     if ( 'human' === $wd_type ) {
@@ -303,7 +303,7 @@ class wdtax_taxonomy {
                            ?pod wdt:P17 ?cod }
                 OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }
                 OPTIONAL { wd:{$wd_id} wdt:P213 ?isni }";
-      $wd = new wdtax_human_wikidata( $wd_id, $props, $types, $where );
+      $wd = new wdtax_wikidata( $wd_id, $types, $where );
     } elseif ( 'book' === $wd_type) {
       $props = array_merge($this->generic_properties, $this->book_properties);
       $types = $this->book_property_types;
@@ -313,7 +313,7 @@ class wdtax_taxonomy {
                 OPTIONAL { wd:{$wd_id} wdt:P577 ?pubdate }
                 OPTIONAL { wd:{$wd_id} wdt:P50 ?author }
                 OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }";
-      $wd = new wdtax_any_wikidata( $wd_id, $props, $types, $where );
+      $wd = new wdtax_wikidata( $wd_id, $types, $where );
     } else {
     }
     //iterate over every property we know about and if the wikidata object

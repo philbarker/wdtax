@@ -64,7 +64,6 @@ abstract class wdtax_wikidata_basics {
 			$tag = $p.$label;
 		}
 		if ( isset( $this->wikidata->results->bindings[0]->$tag->value ) ) {
-//			$this->$p = $this->wikidata->results->bindings[0]->$tag->value;
 			$this->properties[$p] = $this->wikidata->results->bindings[0]->$tag->value;
 			return true;
 		} else {
@@ -91,7 +90,6 @@ abstract class wdtax_wikidata_basics {
 			return false;
 		}
 	}
-
 	protected function strip_zero($year_in) {
 		if ('0' !== substr( $year_in, 0, 1 ) ) {
 			return $year_in;
@@ -112,7 +110,6 @@ abstract class wdtax_wikidata_basics {
 		$year = $this->strip_zero(substr($year, 0, 4) );
 		return $year.$BCE;
 	}
-
 	function get_property( $property ) {
 		if ( $this->$property ) {
 			return $this->$property;
@@ -150,8 +147,8 @@ abstract class wdtax_wikidata_basics {
 }
 
 class wdtax_generic_wikidata extends wdtax_wikidata_basics {
-  public function __construct( $wd_id, $properties=array(),
-	                                     $property_types=array() ) {
+  public function __construct( $wd_id, $property_types=array() ) {
+		$properties = array_keys( $property_types );
     $where = "wd:{$wd_id} rdfs:label ?label.
     				  wd:{$wd_id} schema:description ?description.
 							OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
@@ -176,48 +173,9 @@ class wdtax_generic_wikidata extends wdtax_wikidata_basics {
     parent::__construct( $wd_id, $properties );
   }
 }
-
-class wdtax_human_wikidata extends wdtax_wikidata_basics {
-  public function __construct( $wd_id, $properties=array(),
-                                       $property_types=array() ) {
-		$where = "wd:{$wd_id} rdfs:label ?label .
-					    wd:{$wd_id} schema:description ?description .
-							OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
-							OPTIONAL { wd:{$wd_id} wdt:P569 ?dob }
-							OPTIONAL { wd:{$wd_id} wdt:P19 ?pob .
-							           ?pob wdt:P17 ?cob }
-							OPTIONAL { wd:{$wd_id} wdt:P570 ?dod }
-							OPTIONAL { wd:{$wd_id} wdt:P20 ?pod .
-							           ?pod wdt:P17 ?cod }
-  						OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }
-							OPTIONAL { wd:{$wd_id} wdt:P213 ?isni }";
-		$select = '';
-		foreach ( array_keys( $property_types ) as $property ) {
-			if ('Label'===$property_types[$property]) {
-				$select = $select.'?'.$property.$property_types[$property].' ';
-			} else {
-				$select = $select.'?'.$property.' ';
-			}
-			unset( $property );
-		}
-		$this->sparqlQuery =
-			'SELECT '.$select.' '.
-			'WHERE {'.$where.' '.
-				'FILTER(LANG(?label) = "en").'.
-				'FILTER(LANG(?description) = "en").'.
-				'SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }'.
-			'}';
-		parent::__construct( $wd_id, $properties );
-		foreach ( array_keys( $property_types ) as $property ) {
-			$this->set_property( $property, $property_types[$property] );
-			unset( $property );
-		}
-	}
-}
 class wdtax_wikidata extends wdtax_wikidata_basics {
-  public function __construct( $wd_id, $properties=array(),
-                                       $property_types=array(),
-																		   $where ) {
+  public function __construct( $wd_id, $property_types=array(), $where ) {
+		$properties = array_keys( $property_types );
 		$select = '';
 		foreach ( array_keys( $property_types ) as $property ) {
 			if ('Label'===$property_types[$property]) {
