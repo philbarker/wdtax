@@ -150,14 +150,9 @@ abstract class wdtax_wikidata_basics {
 }
 
 class wdtax_generic_wikidata extends wdtax_wikidata_basics {
-  public function __construct( $wd_id, $properties=array() ) {
+  public function __construct( $wd_id, $properties=array(),
+	                                     $property_types=array() ) {
 		// what type of object do we expect for each wikidata property
-    $property_types = array(
-          'label'=>'',
-          'description'=>'',
-					'image' => '',
-					'type'=>'Label'
-        );
     $where = "wd:{$wd_id} rdfs:label ?label.
     				  wd:{$wd_id} schema:description ?description.
 							OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
@@ -184,20 +179,9 @@ class wdtax_generic_wikidata extends wdtax_wikidata_basics {
 }
 
 class wdtax_human_wikidata extends wdtax_wikidata_basics {
-  public function __construct( $wd_id, $properties=array() ) {
-		$property_types = array(
-					'label'=>'',
-					'description'=>'',
-					'type'=>'Label',
-					'dob'=>'Year',
-					'pob'=>'Label',
-					'cob'=>'Label',
-					'dod'=>'Year',
-					'pod'=>'Label',
-					'cod'=>'Label',
-					'viaf' => '',
-					'isni' => ''
-		);
+  public function __construct( $wd_id, $properties=array(),
+                                       $property_types=array() ) {
+
 		$where = "wd:{$wd_id} rdfs:label ?label .
 					    wd:{$wd_id} schema:description ?description .
 							OPTIONAL { wd:{$wd_id} wdt:P31 ?type }

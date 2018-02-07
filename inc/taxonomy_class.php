@@ -69,9 +69,26 @@ class wdtax_taxonomy {
     'pod' => '', // place of death
     'cod' => '', // country of death
     'viaf' => '', // VIAF id
-    'isni' => '', // ISNI id
+    'isni' => '' // ISNI id
   );
-
+  public $generic_property_types = array(
+    'label'=>'',
+    'description'=>'',
+    'type'=>'Label'
+  );
+  public $human_property_types = array(
+    'label'=>'',
+    'description'=>'',
+    'type'=>'Label',
+    'dob'=>'Year',
+    'pob'=>'Label',
+    'cob'=>'Label',
+    'dod'=>'Year',
+    'pod'=>'Label',
+    'cod'=>'Label',
+    'viaf' => '',
+    'isni' => ''
+  );
   function __construct($taxonomy, $type, $s_name='', $p_name='') {
     /* sets up a taxonomy.
     * $taxonomy = id of taxonomy, $type = types of post to attach it
@@ -84,32 +101,32 @@ class wdtax_taxonomy {
     $this->id = $taxonomy;
     $this->type = $type;
     $this->args = array(
-        	'labels' => array (
-    	    	'name'          => $p_name,
-       			'singular name' => $s_name,
-            'menu_name'     => __($p_name, 'wdtax'),
-            'all_items'     => __('All '.$p_name, 'wdtax'),
-            'edit_item'     => __('Edit '.$s_name, 'wdtax'),
-            'view_item'     => __('View '.$s_name, 'wdtax'),
-            'update_item'  => __('Update '.$s_name, 'wdtax'),
-            'add_new_item'  => __('Add New '.$s_name, 'wdtax'),
-            'search_items'  => __('Search '.$p_name, 'wdtax'),
-            'popular_items'  => __('Popular '.$p_name, 'wdtax'),
-            'separate_items_with_commas' =>
-                        __('Separate terms with commas', 'wdtax'),
-            'add_or_remove_items' => __('Add or remove '.$p_name, 'wdtax'),
-            'choose_from_most_used' => __('Choose from most used '.$p_name,
-                                          'wdtax'),
-            'not_found'  => __('No '.$p_name.' found', 'wdtax')
-        		),
-        	'public'       => true,
-        	'hierarchical' => false,
-        	'show_admin_column' => true,
-        	'show_in_menu' => true,
-    	    'rewrite'      => array( 'slug' => $p_name ),
-    	    'description'  => 'Indexes '.$p_name.' mentioned in articles',
-    	    'sort'         => true
-    	    );
+    	'labels' => array (
+	    	'name'          => $p_name,
+   			'singular name' => $s_name,
+        'menu_name'     => __($p_name, 'wdtax'),
+        'all_items'     => __('All '.$p_name, 'wdtax'),
+        'edit_item'     => __('Edit '.$s_name, 'wdtax'),
+        'view_item'     => __('View '.$s_name, 'wdtax'),
+        'update_item'  => __('Update '.$s_name, 'wdtax'),
+        'add_new_item'  => __('Add New '.$s_name, 'wdtax'),
+        'search_items'  => __('Search '.$p_name, 'wdtax'),
+        'popular_items'  => __('Popular '.$p_name, 'wdtax'),
+        'separate_items_with_commas' =>
+                    __('Separate terms with commas', 'wdtax'),
+        'add_or_remove_items' => __('Add or remove '.$p_name, 'wdtax'),
+        'choose_from_most_used' => __('Choose from most used '.$p_name,
+                                      'wdtax'),
+        'not_found'  => __('No '.$p_name.' found', 'wdtax')
+  		),
+    	'public'       => true,
+    	'hierarchical' => false,
+    	'show_admin_column' => true,
+    	'show_in_menu' => true,
+	    'rewrite'      => array( 'slug' => $p_name ),
+	    'description'  => 'Indexes '.$p_name.' mentioned in articles',
+	    'sort'         => true
+	  );
   }
   function init() {
     /*hooks into various init action*/
@@ -251,10 +268,18 @@ class wdtax_taxonomy {
    // will fetch wikidata for $wd_id, which should be wikidata identifier (Q#)
    // and will store relevant data as proerties/metadata for taxonomy term
    //
+   $property_types = array(
+         'label'=>'',
+         'description'=>'',
+        'image' => '',
+        'type'=>'Label'
+       );
+
     $p_map = $this->property_map;
     $props = $this->generic_properties;
+    $types = $this->generic_property_types;
     $this->delete_term_metadata( $term_id );
-    $wd = new wdtax_generic_wikidata( $wd_id, $props );
+    $wd = new wdtax_generic_wikidata( $wd_id, $props, $types );
     $wd->store_term_data( $term_id, $this->id ); //update term name and descr
     $wd->store_property( $term_id, 'wd_id', $p_map['wd_id'][0]);
     $wd->store_property( $term_id, 'wd_description', $p_map['wd_description'][0] );
@@ -264,7 +289,8 @@ class wdtax_taxonomy {
     $wd_type = get_term_meta( $term_id, 'wd_type', true );
     if ( 'human' === $wd_type ) {
       $props = array_merge($this->generic_properties, $this->human_properties);
-      $wd = new wdtax_human_wikidata( $wd_id, $props );
+      $types = $this->human_property_types;
+      $wd = new wdtax_human_wikidata( $wd_id, $props, $types );
       $wd->store_property( $term_id, 'wd_birth_year', $p_map['wd_birth_year'][0] );
     	$wd->store_property( $term_id, 'wd_death_year', $p_map['wd_death_year'][0] );
     	$wd->store_property( $term_id, 'wd_birth_place', $p_map['wd_birth_place'][0] );
