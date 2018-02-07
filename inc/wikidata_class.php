@@ -18,7 +18,6 @@ abstract class wdtax_wikidata_basics {
 	 * set_ value from wikidata as property
 	 * get_ value of a property
 	 * store_ value of property as metadata
-	 !!maybe the store_ methods ought to be in the taxonomy class.
 	 *
 	 * wikidata is fetched and properties set on initiation
 	 * properties need to be stored explicitly
@@ -33,7 +32,8 @@ abstract class wdtax_wikidata_basics {
 	public $sparqlQuery = '';
 	public $wikidata;
 
-	public function __construct( $wd_id ) {
+	public function __construct( $wd_id, $properties ) {
+		$this->properties = array_merge($this->properties, $properties);
 		$this->properties['id'] = $wd_id;
 		$this->fetch_wikidata();
 		$this->set_text_property( 'label' );
@@ -150,7 +150,7 @@ abstract class wdtax_wikidata_basics {
 }
 
 class wdtax_generic_wikidata extends wdtax_wikidata_basics {
-  public function __construct( $wd_id ) {
+  public function __construct( $wd_id, $properties=array() ) {
 		// what type of object do we expect for each wikidata property
     $property_types = array(
           'label'=>'',
@@ -179,26 +179,12 @@ class wdtax_generic_wikidata extends wdtax_wikidata_basics {
       'FILTER(LANG(?description) = "en").'.
       'SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }'.
       '}';
-    parent::__construct( $wd_id );
+    parent::__construct( $wd_id, $properties );
   }
 }
 
 class wdtax_human_wikidata extends wdtax_wikidata_basics {
-	//Will be used to store values of wikidata properties relevant to humans
-	//This array is added to properties array of wdtax_wikidata class so no need
-	//to access it directly
-	private $human_props = array(
-					'dob' => '', // date of birth
-					'pob' => '', // place of birth
-					'cob' => '', // country of birth
-					'dod' => '', // date of death
-					'pod' => '', // place of death
-					'cod' => '', // country of death
-					'viaf' => '', // VIAF id
-					'isni' => '', // ISNI id
-	);
-  public function __construct( $wd_id ) {
-		$this->properties = array_merge( $this->properties, $this->human_props);
+  public function __construct( $wd_id, $properties=array() ) {
 		$property_types = array(
 					'label'=>'',
 					'description'=>'',
@@ -241,7 +227,7 @@ class wdtax_human_wikidata extends wdtax_wikidata_basics {
 				'SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }'.
 			'}';
 
-		parent::__construct( $wd_id );
+		parent::__construct( $wd_id, $properties );
 		foreach ( array_keys( $property_types ) as $property ) {
 			$this->set_property( $property, $property_types[$property] );
 			unset( $property );
