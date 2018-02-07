@@ -152,7 +152,6 @@ abstract class wdtax_wikidata_basics {
 class wdtax_generic_wikidata extends wdtax_wikidata_basics {
   public function __construct( $wd_id, $properties=array(),
 	                                     $property_types=array() ) {
-		// what type of object do we expect for each wikidata property
     $where = "wd:{$wd_id} rdfs:label ?label.
     				  wd:{$wd_id} schema:description ?description.
 							OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
@@ -181,7 +180,6 @@ class wdtax_generic_wikidata extends wdtax_wikidata_basics {
 class wdtax_human_wikidata extends wdtax_wikidata_basics {
   public function __construct( $wd_id, $properties=array(),
                                        $property_types=array() ) {
-
 		$where = "wd:{$wd_id} rdfs:label ?label .
 					    wd:{$wd_id} schema:description ?description .
 							OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
@@ -193,7 +191,6 @@ class wdtax_human_wikidata extends wdtax_wikidata_basics {
 							           ?pod wdt:P17 ?cod }
   						OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }
 							OPTIONAL { wd:{$wd_id} wdt:P213 ?isni }";
-
 		$select = '';
 		foreach ( array_keys( $property_types ) as $property ) {
 			if ('Label'===$property_types[$property]) {
@@ -210,7 +207,6 @@ class wdtax_human_wikidata extends wdtax_wikidata_basics {
 				'FILTER(LANG(?description) = "en").'.
 				'SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }'.
 			'}';
-
 		parent::__construct( $wd_id, $properties );
 		foreach ( array_keys( $property_types ) as $property ) {
 			$this->set_property( $property, $property_types[$property] );
