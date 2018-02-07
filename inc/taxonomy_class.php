@@ -46,7 +46,9 @@ class wdtax_taxonomy {
     'wd_death_place' => ['pod', 'Place of death', 'deathPlace'],
     'wd_death_country' => ['cod', 'Country of death', 'deathPlace'],
     'wd_viaf' => ['viaf', 'VIAF', 'sameAs'],
-    'wd_isni' => ['isni', 'ISNI', 'sameAs']
+    'wd_isni' => ['isni', 'ISNI', 'sameAs'],
+    'wd_pub_date' => ['pubdate', 'Year of publication', 'datePublished'],
+    'wd_author' => ['author', 'Author', 'author']
   );
   // $type map maps wikidata class labels to schema Types, most specific first
   public $type_map = array(
@@ -71,6 +73,11 @@ class wdtax_taxonomy {
     'viaf' => '', // VIAF id
     'isni' => '' // ISNI id
   );
+  public $book_properties = array(
+    'pubdate' => '', // date of birth
+    'author' => '', // place of birth
+    'viaf' => '' // VIAF id
+  );
   public $generic_property_types = array(
     'label'=>'',
     'description'=>'',
@@ -88,6 +95,14 @@ class wdtax_taxonomy {
     'cod'=>'Label',
     'viaf' => '',
     'isni' => ''
+  );
+  public $book_property_types = array(
+    'label'=>'',
+    'description'=>'',
+    'type'=>'Label',
+    'pubdate'=>'Year',
+    'author'=>'Label',
+    'viaf' => ''
   );
   function __construct($taxonomy, $type, $s_name='', $p_name='') {
     /* sets up a taxonomy.
@@ -273,6 +288,34 @@ class wdtax_taxonomy {
     $this->delete_term_metadata( $term_id );
     $wd = new wdtax_generic_wikidata( $wd_id, $props, $types );
     $wd->store_term_data( $term_id, $this->id ); //update term name and descr
+    $wd_type = $wd->properties['type'];
+    if ( 'human' === $wd_type ) {
+      $props = array_merge($this->generic_properties, $this->human_properties);
+      $types = $this->human_property_types;
+      $where = "wd:{$wd_id} rdfs:label ?label .
+                wd:{$wd_id} schema:description ?description .
+                OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
+                OPTIONAL { wd:{$wd_id} wdt:P569 ?dob }
+                OPTIONAL { wd:{$wd_id} wdt:P19 ?pob .
+                           ?pob wdt:P17 ?cob }
+                OPTIONAL { wd:{$wd_id} wdt:P570 ?dod }
+                OPTIONAL { wd:{$wd_id} wdt:P20 ?pod .
+                           ?pod wdt:P17 ?cod }
+                OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }
+                OPTIONAL { wd:{$wd_id} wdt:P213 ?isni }";
+      $wd = new wdtax_human_wikidata( $wd_id, $props, $types, $where );
+    } elseif ( 'book' === $wd_type) {
+      $props = array_merge($this->generic_properties, $this->book_properties);
+      $types = $this->book_property_types;
+      $where = "wd:{$wd_id} rdfs:label ?label .
+                wd:{$wd_id} schema:description ?description .
+                OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
+                OPTIONAL { wd:{$wd_id} wdt:P577 ?pubdate }
+                OPTIONAL { wd:{$wd_id} wdt:P50 ?author }
+                OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }";
+      $wd = new wdtax_any_wikidata( $wd_id, $props, $types, $where );
+    } else {
+    }
     //iterate over every property we know about and if the wikidata object
     //has a value for it in its $properties array, save it as metadata
     //for this term
@@ -280,23 +323,7 @@ class wdtax_taxonomy {
       if ( isset($wd->properties[$p_map[$key][0]] )
           && '' !== $wd->properties[$p_map[$key][0]] ) {
             $wd->store_property( $term_id, $key, $p_map[$key][0]);
-          }
-    }
-    $wd_type = get_term_meta( $term_id, 'wd_type', true );
-    if ( 'human' === $wd_type ) {
-      $props = array_merge($this->generic_properties, $this->human_properties);
-      $types = $this->human_property_types;
-      $wd = new wdtax_human_wikidata( $wd_id, $props, $types );
-      //iterate over every property we know about and if the wikidata object
-      //has a value for it in its $properties array, save it as metadata
-      //for this term
-      foreach ( array_keys( $p_map ) as $key ) {
-        if ( isset($wd->properties[$p_map[$key][0]] )
-            && '' !== $wd->properties[$p_map[$key][0]] ) {
-              $wd->store_property( $term_id, $key, $p_map[$key][0]);
-            }
       }
-    } else {
     }
   }
   function schema_type( $term_id ) {

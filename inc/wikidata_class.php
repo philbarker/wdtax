@@ -214,3 +214,30 @@ class wdtax_human_wikidata extends wdtax_wikidata_basics {
 		}
 	}
 }
+class wdtax_wikidata extends wdtax_wikidata_basics {
+  public function __construct( $wd_id, $properties=array(),
+                                       $property_types=array(),
+																		   $where ) {
+		$select = '';
+		foreach ( array_keys( $property_types ) as $property ) {
+			if ('Label'===$property_types[$property]) {
+				$select = $select.'?'.$property.$property_types[$property].' ';
+			} else {
+				$select = $select.'?'.$property.' ';
+			}
+			unset( $property );
+		}
+		$this->sparqlQuery =
+			'SELECT '.$select.' '.
+			'WHERE {'.$where.' '.
+				'FILTER(LANG(?label) = "en").'.
+				'FILTER(LANG(?description) = "en").'.
+				'SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }'.
+			'}';
+		parent::__construct( $wd_id, $properties );
+		foreach ( array_keys( $property_types ) as $property ) {
+			$this->set_property( $property, $property_types[$property] );
+			unset( $property );
+		}
+	}
+}
