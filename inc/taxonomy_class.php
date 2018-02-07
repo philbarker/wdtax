@@ -56,28 +56,6 @@ class wdtax_taxonomy {
     'creative work' => 'CreativeWork',
     'human' => 'Person'
   );
-  public $generic_properties = array(
-    'id' =>'',     //id (wikidata Q#)
-    'label' =>'',  //label or name
-    'description' => '', //description text
-    'image' => '', // url to image
-    'type' =>''    // class in wikidata
-  );
-  public $human_properties = array(
-    'dob' => '', // date of birth
-    'pob' => '', // place of birth
-    'cob' => '', // country of birth
-    'dod' => '', // date of death
-    'pod' => '', // place of death
-    'cod' => '', // country of death
-    'viaf' => '', // VIAF id
-    'isni' => '' // ISNI id
-  );
-  public $book_properties = array(
-    'pubdate' => '', // date of birth
-    'author' => '', // place of birth
-    'viaf' => '' // VIAF id
-  );
   public $generic_property_types = array(
     'label'=>'',
     'description'=>'',
@@ -283,14 +261,12 @@ class wdtax_taxonomy {
    // and will store relevant data as proerties/metadata for taxonomy term
    //
     $p_map = $this->property_map;
-    $props = $this->generic_properties;
     $types = $this->generic_property_types;
     $this->delete_term_metadata( $term_id );
     $wd = new wdtax_generic_wikidata( $wd_id, $types );
     $wd->store_term_data( $term_id, $this->id ); //update term name and descr
     $wd_type = $wd->properties['type'];
     if ( 'human' === $wd_type ) {
-      $props = array_merge($this->generic_properties, $this->human_properties);
       $types = $this->human_property_types;
       $where = "wd:{$wd_id} rdfs:label ?label .
                 wd:{$wd_id} schema:description ?description .
@@ -305,7 +281,6 @@ class wdtax_taxonomy {
                 OPTIONAL { wd:{$wd_id} wdt:P213 ?isni }";
       $wd = new wdtax_wikidata( $wd_id, $types, $where );
     } elseif ( 'book' === $wd_type) {
-      $props = array_merge($this->generic_properties, $this->book_properties);
       $types = $this->book_property_types;
       $where = "wd:{$wd_id} rdfs:label ?label .
                 wd:{$wd_id} schema:description ?description .
