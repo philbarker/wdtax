@@ -170,12 +170,11 @@ class wdtax_taxonomy {
     //add fields & info to edit term form
     //hooked into {$this-id}_edit_form_fields action
     //fires after edit term form fields are displayed
-    $term_id = $term->term_id;
+    $term_id = $term->term_id ;
     $wd_id = ucfirst( get_term_meta( $term_id, 'wd_id', true ) );
     $wd_name = get_term_meta( $term_id, 'wd_name', true );
     $wd_description = get_term_meta( $term_id, 'wd_description', true );
     $term_meta = get_term_meta( $term->term_id );
-    echo $this->id;
     ?>
     <tr class="form-field term-group-wrap">
         <th scope="row">
@@ -268,37 +267,35 @@ class wdtax_taxonomy {
    // will fetch wikidata for $wd_id, which should be wikidata identifier (Q#)
    // and will store relevant data as proerties/metadata for taxonomy term
    //
-   $property_types = array(
-         'label'=>'',
-         'description'=>'',
-        'image' => '',
-        'type'=>'Label'
-       );
-
     $p_map = $this->property_map;
     $props = $this->generic_properties;
     $types = $this->generic_property_types;
     $this->delete_term_metadata( $term_id );
     $wd = new wdtax_generic_wikidata( $wd_id, $props, $types );
     $wd->store_term_data( $term_id, $this->id ); //update term name and descr
-    $wd->store_property( $term_id, 'wd_id', $p_map['wd_id'][0]);
-    $wd->store_property( $term_id, 'wd_description', $p_map['wd_description'][0] );
-    $wd->store_property( $term_id, 'wd_name', $p_map['wd_name'][0] );
-    $wd->store_property( $term_id, 'wd_image', $p_map['wd_image'][0] );
-    $wd->store_property( $term_id, 'wd_type', $p_map['wd_type'][0] );
+    //iterate over every property we know about and if the wikidata object
+    //has a value for it in its $properties array, save it as metadata
+    //for this term
+    foreach ( array_keys( $p_map ) as $key ) {
+      if ( isset($wd->properties[$p_map[$key][0]] )
+          && '' !== $wd->properties[$p_map[$key][0]] ) {
+            $wd->store_property( $term_id, $key, $p_map[$key][0]);
+          }
+    }
     $wd_type = get_term_meta( $term_id, 'wd_type', true );
     if ( 'human' === $wd_type ) {
       $props = array_merge($this->generic_properties, $this->human_properties);
       $types = $this->human_property_types;
       $wd = new wdtax_human_wikidata( $wd_id, $props, $types );
-      $wd->store_property( $term_id, 'wd_birth_year', $p_map['wd_birth_year'][0] );
-    	$wd->store_property( $term_id, 'wd_death_year', $p_map['wd_death_year'][0] );
-    	$wd->store_property( $term_id, 'wd_birth_place', $p_map['wd_birth_place'][0] );
-    	$wd->store_property( $term_id, 'wd_birth_country', $p_map['wd_birth_country'][0] );
-    	$wd->store_property( $term_id, 'wd_death_place', $p_map['wd_death_place'][0] );
-      $wd->store_property( $term_id, 'wd_death_country', $p_map['wd_death_country'][0] );
-      $wd->store_property( $term_id, 'wd_viaf', $p_map['wd_viaf'][0] );
-      $wd->store_property( $term_id, 'wd_isni', $p_map['wd_isni'][0] );
+      //iterate over every property we know about and if the wikidata object
+      //has a value for it in its $properties array, save it as metadata
+      //for this term
+      foreach ( array_keys( $p_map ) as $key ) {
+        if ( isset($wd->properties[$p_map[$key][0]] )
+            && '' !== $wd->properties[$p_map[$key][0]] ) {
+              $wd->store_property( $term_id, $key, $p_map[$key][0]);
+            }
+      }
     } else {
     }
   }
