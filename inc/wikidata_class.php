@@ -131,6 +131,52 @@ abstract class wdtax_wikidata_basics {
 			return new WP_Error( 'Error', 'No data to store for property: '.$p );
 		}
 	}
+	function set_known_wd_type( $type_map ) {
+		//once the wikidata id (Q#) for an object is set, this looks at the
+		//wikidata type hierarchy going up from the type of the object until
+		//it finds the first matching type in $type_map
+		if ( !empty($this->properties['id'] ) )  {
+			$wd_id = $this->properties['id'];
+		} else {
+			echo 'Error: no wikidata object identifier set.';
+			return;
+		}
+		$format = 'json';
+		$type_query = "SELECT  ?classLabel
+	    WHERE {
+	      wd:$wd_id (wdt:P31|wdt:P279)* ?class .
+	      SERVICE wikibase:label {
+					bd:serviceParam wikibase:language '[AUTO_LANGUAGE],en'.
+				}
+		  }";
+		$queryUrl = $this->endpointUrl.'?query='.$type_query.'&format='.$format;
+		$response = wp_remote_get( $queryUrl );
+		$results = json_decode( $response['body'] );
+		if  ( is_array( $response ) ) {
+			foreach ( $results->results->bindings as $r ){
+				foreach ( array_keys( $type_map ) as $wd_type ) {
+//					echo 'returned value: '.$r->classLabel->value;
+//					echo ' checking value: '.$type_map[$wd_type].'<br>';
+
+					if ( $r->classLabel->value === $wd_type ) {
+//						echo 'returned value: '.$r->classLabel->value;
+//						echo '<br>';
+//						echo 'matched value: '.$type_map[$wd_type];
+						$this->properties['type'] = $wd_type;
+						return $wd_type;
+					}
+				}
+			} //got through both arrays without matching anything more specific
+			$this->properties['type'] = 'Thing';
+			return 'Thing';
+		} else {
+			echo 'sorry nothing from wikidata for you';
+			echo '<br>Query: '.$this->type_query ;
+			echo '<br>Endpoint: '.$this->endpointUrl ;
+		}
+
+	}
+
 	function fetch_wikidata() {
 		$query = urlencode($this->sparqlQuery);
 		$format = 'json';

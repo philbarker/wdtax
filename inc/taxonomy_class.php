@@ -15,7 +15,7 @@ class wdtax_taxonomy {
   * data from wikidata and can be used to provide linked data with schema.org
   * properties such as schema:about, scheam:mentions...
   *
-  * After instatiating, the init and and admin init methos should be called to
+  * After instatiating, the init  method should be called to
   * hook various functions to init and admin_init.
   *
   * methods
@@ -53,8 +53,15 @@ class wdtax_taxonomy {
   // $type map maps wikidata class labels to schema Types, most specific first
   public $type_map = array(
     'book' => 'Book',
+    'literary work' => 'Book',
     'creative work' => 'CreativeWork',
-    'human' => 'Person'
+    'human' => 'Person',
+    'country' => 'Place',
+    'city' => 'Place',
+    'battle' => 'Event',
+    'location' => 'Place',
+    'abstract object' => 'Intangible',
+    'object' => 'Thing'
   );
   public $generic_property_types = array(
     'label'=>'',
@@ -265,6 +272,7 @@ class wdtax_taxonomy {
     $this->delete_term_metadata( $term_id );
     $wd = new wdtax_generic_wikidata( $wd_id, $types );
     $wd->store_term_data( $term_id, $this->id ); //update term name and descr
+    $wd->set_known_wd_type( $this->type_map );
     $wd_type = $wd->properties['type'];
     if ( 'human' === $wd_type ) {
       $types = $this->human_property_types;
@@ -315,7 +323,7 @@ class wdtax_taxonomy {
   }
   function schema_text( $term_id, $p, $args=array() ) {
     // echo property $p of a term as schema markup for property to which $p maps
-    // in $property_map, in html tag $args['tag'] or span as defaul, with
+    // in $property_map, in html tag $args['tag'] or span as default, with
     // text $args['before'|'after'] before or after $p. $args['class'] can be
     // used for @class of html element
     if ( isset( $args['tag'] ) ) {
@@ -418,6 +426,13 @@ class wdtax_taxonomy {
     }
     return $return_val;
   }
+  function schema_person_details ( $term_id ) {
+    $args = array('after'=>'. ');
+    $descr = $this->schema_text( $term_id, 'wd_description', $args);
+    $birth =  $this->schema_birth_details( $term_id );
+    $death = $this->schema_death_details( $term_id );
+    return $descr.$birth.$death;
+  }
   function schema_sameas_wd( $term_id ) {
     $term_meta = get_term_meta( $term_id );
     $base_url = 'https://www.wikidata.org/entity/';
@@ -456,5 +471,26 @@ class wdtax_taxonomy {
     } else {
       return '';
     }
+  }
+  function schema_author( $term_id ) {
+    $term_meta = get_term_meta( $term_id );
+    if ( isset( $term_meta['wd_author'] ) ) {
+      return ' by '.$this->schema_text( $term_id, 'wd_author' );
+    } else {
+      return '';
+    }
+  }
+  function schema_publication_date( $term_id ) {
+    $term_meta = get_term_meta( $term_id );
+    if ( isset( $term_meta['wd_pub_date'] ) ) {
+      return ' published '.$this->schema_text( $term_id, 'wd_pub_date' );
+    } else {
+      return '';
+    }
+  }
+  function schema_book_details( $term_id ) {
+    $auth = $this->schema_author( $term_id );
+    $publ = $this->schema_publication_date( $term_id );
+    return 'Book '.$auth.$publ.'. ';
   }
 }

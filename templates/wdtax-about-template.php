@@ -16,6 +16,8 @@ get_header();
 $term_id = get_queried_object_id();
 global $wp;
 global $wdtax_about_taxonomy; //instance of object from inc/taxonomy_class.php
+$term_meta = get_term_meta( $term_id );
+$type = $wdtax_about_taxonomy->type_map[$term_meta['wd_type'][0]]
 ?>
 	<div id="primary" class="content-area"
 	     vocab="http://schema.org/"
@@ -28,11 +30,11 @@ global $wdtax_about_taxonomy; //instance of object from inc/taxonomy_class.php
 					echo $wdtax_about_taxonomy->schema_text( $term_id, 'wd_name' );
 					echo '</h1>';
           echo '<div class="taxonomy-description" > ';
-					$args = array('after'=>'. ');
-					echo $wdtax_about_taxonomy->schema_text( $term_id, 'wd_description',
-					                                         $args);
-					echo $wdtax_about_taxonomy->schema_birth_details( $term_id );
-					echo $wdtax_about_taxonomy->schema_death_details( $term_id );
+					if ( 'Person' === $type ){
+						echo $wdtax_about_taxonomy->schema_person_details( $term_id );
+					} elseif ('Book' === $type ) {
+						echo $wdtax_about_taxonomy->schema_book_details( $term_id );
+					}
 					echo '</div>';
 					echo $wdtax_about_taxonomy->schema_sameas_wd( $term_id );
 				?>
