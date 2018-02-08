@@ -34,9 +34,11 @@ $type = $wdtax_about_taxonomy->type_map[$term_meta['wd_type'][0]]
 						echo $wdtax_about_taxonomy->schema_person_details( $term_id );
 					} elseif ('Book' === $type ) {
 						echo $wdtax_about_taxonomy->schema_book_details( $term_id );
+					} elseif ('Place' === $type ) {
+						echo $wdtax_about_taxonomy->schema_place_details( $term_id );
 					}
 					echo '</div>';
-					echo $wdtax_about_taxonomy->schema_sameas_wd( $term_id );
+					echo $wdtax_about_taxonomy->schema_sameas_all( $term_id );
 				?>
 			</header><!-- .page-header -->
 

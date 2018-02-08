@@ -1,4 +1,4 @@
-<?php
+geoname<?php
 /*
  * Package Name: wdtax
  * Description: class and mehtods for custom taxonomies & their metadata
@@ -32,7 +32,7 @@ class wdtax_taxonomy {
   protected $type;   //types of post to which taxonomy apllies
   protected $args;   //argument array of taxonomy
   //next: keys used for storing wikidata properties as term metadata mapped
-  //to key in $taxonomy->properties array, human label, schema id, ?wd id?...
+  //to key in $taxonomy->properties array, human label, schema id
   public $property_map = array(
     'wd_id' => ['id', 'Wikidata ID', 'sameAs'],
     'wd_description' => ['description', 'Description', 'description'],
@@ -48,7 +48,9 @@ class wdtax_taxonomy {
     'wd_viaf' => ['viaf', 'VIAF', 'sameAs'],
     'wd_isni' => ['isni', 'ISNI', 'sameAs'],
     'wd_pub_date' => ['pubdate', 'Year of publication', 'datePublished'],
-    'wd_author' => ['author', 'Author', 'author']
+    'wd_author' => ['author', 'Author', 'author'],
+    'wd_country'=> ['country', 'In country', 'containedInPlace'],
+    'wd_geoname' => ['geoname', 'GeoNames ID', 'sameAs']
   );
   // $type map maps wikidata class labels to schema Types, most specific first
   public $type_map = array(
@@ -56,10 +58,13 @@ class wdtax_taxonomy {
     'literary work' => 'Book',
     'creative work' => 'CreativeWork',
     'human' => 'Person',
+    'fictional human' => 'Person',
     'country' => 'Place',
     'city' => 'Place',
     'battle' => 'Event',
+    'occurrence' => 'Event',
     'location' => 'Place',
+    'organization' => 'Organization',
     'abstract object' => 'Intangible',
     'object' => 'Thing'
   );
@@ -68,7 +73,7 @@ class wdtax_taxonomy {
     'description'=>'',
     'type'=>'Label'
   );
-  public $human_property_types = array(
+  public $person_property_types = array(
     'label'=>'',
     'description'=>'',
     'type'=>'Label',
@@ -87,7 +92,17 @@ class wdtax_taxonomy {
     'type'=>'Label',
     'pubdate'=>'Year',
     'author'=>'Label',
-    'viaf' => ''
+    'viaf' => '',
+    'isni' => ''
+  );
+  public $place_property_types = array(
+    'label'=>'',
+    'description'=>'',
+    'type'=>'Label',
+    'country'=>'Label',
+    'viaf' => '',
+    'isni' => '',
+    'geoname' => ''
   );
   function __construct($taxonomy, $type, $s_name='', $p_name='') {
     /* sets up a taxonomy.
@@ -274,8 +289,8 @@ class wdtax_taxonomy {
     $wd->store_term_data( $term_id, $this->id ); //update term name and descr
     $wd->set_known_wd_type( $this->type_map );
     $wd_type = $wd->properties['type'];
-    if ( 'human' === $wd_type ) {
-      $types = $this->human_property_types;
+    if ( 'Person' === $this->type_map[ $wd_type ] ) {
+      $types = $this->person_property_types;
       $where = "wd:{$wd_id} rdfs:label ?label .
                 wd:{$wd_id} schema:description ?description .
                 OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
@@ -288,7 +303,7 @@ class wdtax_taxonomy {
                 OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }
                 OPTIONAL { wd:{$wd_id} wdt:P213 ?isni }";
       $wd = new wdtax_wikidata( $wd_id, $types, $where );
-    } elseif ( 'book' === $wd_type) {
+    } elseif ( 'Book' === $this->type_map[ $wd_type ]) {
       $types = $this->book_property_types;
       $where = "wd:{$wd_id} rdfs:label ?label .
                 wd:{$wd_id} schema:description ?description .
@@ -297,6 +312,17 @@ class wdtax_taxonomy {
                 OPTIONAL { wd:{$wd_id} wdt:P50 ?author }
                 OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }";
       $wd = new wdtax_wikidata( $wd_id, $types, $where );
+    } elseif ( 'Place' === $this->type_map[ $wd_type ]) {
+      $types = $this->place_property_types;
+      $where = "wd:{$wd_id} rdfs:label ?label .
+                wd:{$wd_id} schema:description ?description .
+                OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
+                OPTIONAL { wd:{$wd_id} wdt:P17 ?country }
+                OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }
+                OPTIONAL { wd:{$wd_id} wdt:P1566 ?geoname }
+                OPTIONAL { wd:{$wd_id} wdt:P213 ?isni }";
+      $wd = new wdtax_wikidata( $wd_id, $types, $where );
+
     } else {
     }
     //iterate over every property we know about and if the wikidata object
@@ -431,7 +457,7 @@ class wdtax_taxonomy {
     $descr = $this->schema_text( $term_id, 'wd_description', $args);
     $birth =  $this->schema_birth_details( $term_id );
     $death = $this->schema_death_details( $term_id );
-    return $descr.$birth.$death;
+    return ucfirst($descr).$birth.$death;
   }
   function schema_sameas_wd( $term_id ) {
     $term_meta = get_term_meta( $term_id );
@@ -472,10 +498,38 @@ class wdtax_taxonomy {
       return '';
     }
   }
+  function schema_sameas_geoname( $term_id ) {
+    $term_meta = get_term_meta( $term_id );
+    $base_url = 'http://geonames.org/';
+    if ( isset( $term_meta['wd_geoname'] ) ) {
+      $args = array(
+        'tag'=>'link',
+        'before'=>$base_url
+      );
+      return $this->schema_text( $term_id, 'wd_geoname', $args );
+    } else {
+      return '';
+    }
+  }
+  function schema_sameas_all( $term_id ) {
+    $wd = $this->schema_sameas_wd( $term_id );
+    $isni = $this->schema_sameas_isni( $term_id );
+    $viaf = $this->schema_sameas_viaf( $term_id );
+    $geoname = $this->schema_sameas_geoname( $term_id );
+    return $wd.$isni.$viaf.$geoname;
+  }
   function schema_author( $term_id ) {
     $term_meta = get_term_meta( $term_id );
     if ( isset( $term_meta['wd_author'] ) ) {
       return ' by '.$this->schema_text( $term_id, 'wd_author' );
+    } else {
+      return '';
+    }
+  }
+  function schema_country( $term_id ) {
+    $term_meta = get_term_meta( $term_id );
+    if ( isset( $term_meta['wd_country'] ) ) {
+      return ' in '.$this->schema_text( $term_id, 'wd_country' );
     } else {
       return '';
     }
@@ -492,5 +546,12 @@ class wdtax_taxonomy {
     $auth = $this->schema_author( $term_id );
     $publ = $this->schema_publication_date( $term_id );
     return 'Book '.$auth.$publ.'. ';
+  }
+  function schema_place_details( $term_id ) {
+    $descr = $this->schema_text( $term_id, 'wd_description' );
+    $type = ' A '.get_term_meta( $term_id, 'wd_type', True );
+    $country = $this->schema_country( $term_id );
+    return ucfirst( $descr ).'.'.$type.$country;
+
   }
 }
