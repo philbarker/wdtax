@@ -138,8 +138,7 @@ abstract class wdtax_wikidata_basics {
 		if ( !empty($this->properties['id'] ) )  {
 			$wd_id = $this->properties['id'];
 		} else {
-			echo 'Error: no wikidata object identifier set.';
-			return;
+			return new WP_Error( 'Error', 'No id for wikidata' );
 		}
 		$format = 'json';
 		$type_query = "SELECT  ?classLabel

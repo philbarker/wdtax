@@ -17,12 +17,12 @@ $term_id = get_queried_object_id();
 global $wp;
 global $wdtax_about_taxonomy; //instance of object from inc/taxonomy_class.php
 $term_meta = get_term_meta( $term_id );
-$type = $wdtax_about_taxonomy->type_map[$term_meta['wd_type'][0]]
+$type = get_term_meta( $term_id, 'schema_type', True );
 ?>
 	<div id="primary" class="content-area"
 	     vocab="http://schema.org/"
 			 resource="<?php echo home_url( $wp->request ).'#id'; ?>"
-			 <?php echo $wdtax_about_taxonomy->schema_type( $term_id ) ?> >
+			 typeof ="<?php echo  $type ?>" >
 		<main id="main" class="site-main" role="main">
 			<header class="page-header">
 				<?php
@@ -36,6 +36,8 @@ $type = $wdtax_about_taxonomy->type_map[$term_meta['wd_type'][0]]
 						echo $wdtax_about_taxonomy->schema_book_details( $term_id );
 					} elseif ('Place' === $type ) {
 						echo $wdtax_about_taxonomy->schema_place_details( $term_id );
+					} else {
+						echo $wdtax_about_taxonomy->schema_text( $term_id, 'wd_description' );
 					}
 					echo '</div>';
 					echo $wdtax_about_taxonomy->schema_sameas_all( $term_id );

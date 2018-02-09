@@ -71,7 +71,7 @@ class wdtax_taxonomy {
   public $generic_property_types = array(
     'label'=>'',
     'description'=>'',
-    'type'=>'Label'
+    'type'=>'Label',
   );
   public $person_property_types = array(
     'label'=>'',
@@ -303,6 +303,7 @@ class wdtax_taxonomy {
                 OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }
                 OPTIONAL { wd:{$wd_id} wdt:P213 ?isni }";
       $wd = new wdtax_wikidata( $wd_id, $types, $where );
+      update_term_meta( $term_id, 'schema_type',  'Person' );
     } elseif ( 'Book' === $this->type_map[ $wd_type ]) {
       $types = $this->book_property_types;
       $where = "wd:{$wd_id} rdfs:label ?label .
@@ -312,6 +313,7 @@ class wdtax_taxonomy {
                 OPTIONAL { wd:{$wd_id} wdt:P50 ?author }
                 OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }";
       $wd = new wdtax_wikidata( $wd_id, $types, $where );
+      update_term_meta( $term_id, 'schema_type',  'Book' );
     } elseif ( 'Place' === $this->type_map[ $wd_type ]) {
       $types = $this->place_property_types;
       $where = "wd:{$wd_id} rdfs:label ?label .
@@ -322,8 +324,9 @@ class wdtax_taxonomy {
                 OPTIONAL { wd:{$wd_id} wdt:P1566 ?geoname }
                 OPTIONAL { wd:{$wd_id} wdt:P213 ?isni }";
       $wd = new wdtax_wikidata( $wd_id, $types, $where );
-
+      update_term_meta( $term_id, 'schema_type',  'Place' );
     } else {
+      update_term_meta( $term_id, 'schema_type',  'Thing' );
     }
     //iterate over every property we know about and if the wikidata object
     //has a value for it in its $properties array, save it as metadata
@@ -333,18 +336,6 @@ class wdtax_taxonomy {
           && '' !== $wd->properties[$p_map[$key][0]] ) {
             $wd->store_property( $term_id, $key, $p_map[$key][0]);
       }
-    }
-  }
-  function schema_type( $term_id ) {
-    //echo the value of schema type that wd_type maps to as value for @typeof
-    $term_meta = get_term_meta( $term_id );
-    if ( isset( $term_meta['wd_type'] )
-      && isset( $this->type_map[$term_meta['wd_type'][0]] )
-      ) {
-      $type = $this->type_map[$term_meta['wd_type'][0]];
-      return ' typeof="'.$type.'" ';
-    } else {
-      return ' typeof="Thing" ';
     }
   }
   function schema_text( $term_id, $p, $args=array() ) {
@@ -457,7 +448,7 @@ class wdtax_taxonomy {
     $descr = $this->schema_text( $term_id, 'wd_description', $args);
     $birth =  $this->schema_birth_details( $term_id );
     $death = $this->schema_death_details( $term_id );
-    return ucfirst($descr).$birth.$death;
+    return $descr.$birth.$death;
   }
   function schema_sameas_wd( $term_id ) {
     $term_meta = get_term_meta( $term_id );
@@ -551,7 +542,6 @@ class wdtax_taxonomy {
     $descr = $this->schema_text( $term_id, 'wd_description' );
     $type = ' A '.get_term_meta( $term_id, 'wd_type', True );
     $country = $this->schema_country( $term_id );
-    return ucfirst( $descr ).'.'.$type.$country;
-
+    return $descr.'.'.$type.$country;
   }
 }
