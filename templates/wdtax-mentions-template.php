@@ -15,30 +15,40 @@
 get_header();
 $term_id = get_queried_object_id();
 global $wp;
-global $wdtax_mentions_taxonomy; //instance of object from inc/taxonomy_class.php
+global $wdtax_about_taxonomy; //instance of object from inc/taxonomy_class.php
+$term_meta = get_term_meta( $term_id );
+$type = get_term_meta( $term_id, 'schema_type', True );
 ?>
-	<div id="primary" class="content-area" vocab="http://schema.org/">
-		<main id="main" class="site-main" role="main">
-			<header class="page-header"
-			        resource="<?php echo home_url( $wp->request ).'#id'; ?>"
-			        <?php echo $wdtax_mentions_taxonomy->schema_type( $term_id ) ?>
-			>
-				<?php
-				  echo '<h1 class="page-title">Pages mentioning: ';
-					echo $wdtax_mentions_taxonomy->schema_text( $term_id, 'wd_name' );
-					echo '</h1>';
-          echo '<div class="taxonomy-description" > ';
-					$args = array('after'=>'. ');
-					echo $wdtax_mentions_taxonomy->schema_text( $term_id, 'wd_description',
-					                                         $args);
-					echo $wdtax_mentions_taxonomy->schema_birth_details( $term_id );
-					echo $wdtax_mentions_taxonomy->schema_death_details( $term_id );
-					echo '</div>';
-					echo $wdtax_mentions_taxonomy->schema_sameas_wd( $term_id );
-					echo $wdtax_mentions_taxonomy->schema_sameas_viaf( $term_id );
-					echo $wdtax_mentions_taxonomy->schema_sameas_isni( $term_id );
-				?>
-			</header><!-- .page-header -->
+<div id="primary" class="content-area"
+		 vocab="http://schema.org/"
+		 resource="<?php echo home_url( $wp->request ).'#id'; ?>"
+		 typeof ="<?php echo  $type ?>" >
+	<main id="main" class="site-main" role="main">
+		<header class="page-header">
+			<?php
+				echo '<h1 class="page-title">Pages about: ';
+				echo $wdtax_about_taxonomy->schema_text( $term_id, 'wd_name' );
+				echo '</h1>';
+				echo '<div class="taxonomy-description" > ';
+				if ( 'Person' === $type ){
+					echo $wdtax_about_taxonomy->schema_person_details( $term_id );
+				} elseif ('Organization' === $type ) {
+					echo $wdtax_about_taxonomy->schema_organization_details( $term_id );
+				} elseif ('Book' === $type ) {
+					echo $wdtax_about_taxonomy->schema_book_details( $term_id );
+				} elseif ('CreativeWork' === $type ) {
+					echo $wdtax_about_taxonomy->schema_creativework_details( $term_id );
+				} elseif ('Place' === $type ) {
+					echo $wdtax_about_taxonomy->schema_place_details( $term_id );
+				} elseif ('Event' === $type ) {
+					echo $wdtax_about_taxonomy->schema_event_details( $term_id );
+				} else {
+					echo $wdtax_about_taxonomy->schema_text($term_id, 'wd_description');
+				}
+				echo '</div>';
+				echo $wdtax_about_taxonomy->schema_sameas_all( $term_id );
+			?>
+		</header><!-- .page-header -->
 
 		<?php if ( have_posts() ) :
 			// Start the Loop.
