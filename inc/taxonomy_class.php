@@ -1,4 +1,4 @@
-geoname<?php
+<?php
 /*
  * Package Name: wdtax
  * Description: class and mehtods for custom taxonomies & their metadata
@@ -45,11 +45,17 @@ class wdtax_taxonomy {
     'wd_birth_country' => ['cob', 'Country of birth', 'birthPlace'],
     'wd_death_place' => ['pod', 'Place of death', 'deathPlace'],
     'wd_death_country' => ['cod', 'Country of death', 'deathPlace'],
+    'wd_place' => ['place', 'Place', 'location'],
+    'wd_country' => ['country', 'Country', 'location'],
+    'wd_date' => ['date', 'date', 'startDate'],
     'wd_viaf' => ['viaf', 'VIAF', 'sameAs'],
     'wd_isni' => ['isni', 'ISNI', 'sameAs'],
     'wd_pub_date' => ['pubdate', 'Year of publication', 'datePublished'],
     'wd_author' => ['author', 'Author', 'author'],
-    'wd_country'=> ['country', 'In country', 'containedInPlace'],
+    'wd_creator' => ['creator', 'Creator', 'creator'],
+    'wd_place_country'=> ['p_country', 'In country', 'containedInPlace'],
+    'wd_inception'=> ['inception', 'Founded', 'foundingDate'],
+    'wd_dissolution'=> ['dissolution', 'Dissolution', 'dissolutionDate'],
     'wd_geoname' => ['geoname', 'GeoNames ID', 'sameAs']
   );
   // $type map maps wikidata class labels to schema Types, most specific first
@@ -86,6 +92,16 @@ class wdtax_taxonomy {
     'viaf' => '',
     'isni' => ''
   );
+  public $organization_property_types = array(
+    'label'=>'',
+    'description'=>'',
+    'type'=>'Label',
+    'inception'=>'Year',
+    'dissolution'=>'Year',
+    'country'=>'Label',
+    'viaf' => '',
+    'isni' => ''
+  );
   public $book_property_types = array(
     'label'=>'',
     'description'=>'',
@@ -95,14 +111,33 @@ class wdtax_taxonomy {
     'viaf' => '',
     'isni' => ''
   );
+  public $creativework_property_types = array(
+    'label'=>'',
+    'description'=>'',
+    'type'=>'Label',
+    'pubdate'=>'Year',
+    'creator'=>'Label',
+    'viaf' => '',
+    'isni' => ''
+  );
   public $place_property_types = array(
     'label'=>'',
     'description'=>'',
     'type'=>'Label',
-    'country'=>'Label',
+    'p_country'=>'Label',
     'viaf' => '',
     'isni' => '',
     'geoname' => ''
+  );
+  public $event_property_types = array(
+    'label'=>'',
+    'description'=>'',
+    'type'=>'Label',
+    'date'=>'Year',
+    'place'=>'Label',
+    'country'=>'Label',
+    'viaf' => '',
+    'isni' => '',
   );
   function __construct($taxonomy, $type, $s_name='', $p_name='') {
     /* sets up a taxonomy.
@@ -304,7 +339,21 @@ class wdtax_taxonomy {
                 OPTIONAL { wd:{$wd_id} wdt:P213 ?isni }";
       $wd = new wdtax_wikidata( $wd_id, $types, $where );
       update_term_meta( $term_id, 'schema_type',  'Person' );
-    } elseif ( 'Book' === $this->type_map[ $wd_type ]) {
+    } elseif (  'Organization' === $this->type_map[ $wd_type ] ) {
+        $types = $this->organization_property_types;
+        $where = "wd:{$wd_id} rdfs:label ?label .
+                  wd:{$wd_id} schema:description ?description .
+                  OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
+                  OPTIONAL { wd:{$wd_id} wdt:P571 ?inception }
+                  OPTIONAL { wd:{$wd_id} wdt:P576 ?dissolution }
+                  OPTIONAL { wd:{$wd_id} wdt:P17 ?country }
+                  OPTIONAL { wd:{$wd_id} wdt:P159 ?place .
+                             ?place wdt:P17 ?country }
+                  OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }
+                  OPTIONAL { wd:{$wd_id} wdt:P213 ?isni }";
+        $wd = new wdtax_wikidata( $wd_id, $types, $where );
+        update_term_meta( $term_id, 'schema_type',  'Organization' );
+    } elseif ( 'Book' === $this->type_map[ $wd_type ] ) {
       $types = $this->book_property_types;
       $where = "wd:{$wd_id} rdfs:label ?label .
                 wd:{$wd_id} schema:description ?description .
@@ -314,17 +363,39 @@ class wdtax_taxonomy {
                 OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }";
       $wd = new wdtax_wikidata( $wd_id, $types, $where );
       update_term_meta( $term_id, 'schema_type',  'Book' );
+    } elseif ( 'CreativeWork' === $this->type_map[ $wd_type ] ) {
+      $types = $this->creativework_property_types;
+      $where = "wd:{$wd_id} rdfs:label ?label .
+                wd:{$wd_id} schema:description ?description .
+                OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
+                OPTIONAL { wd:{$wd_id} wdt:P577 ?pubdate }
+                OPTIONAL { wd:{$wd_id} wdt:P170 ?creator }
+                OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }";
+      $wd = new wdtax_wikidata( $wd_id, $types, $where );
+      update_term_meta( $term_id, 'schema_type',  'CreativeWork' );
     } elseif ( 'Place' === $this->type_map[ $wd_type ]) {
       $types = $this->place_property_types;
       $where = "wd:{$wd_id} rdfs:label ?label .
                 wd:{$wd_id} schema:description ?description .
                 OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
-                OPTIONAL { wd:{$wd_id} wdt:P17 ?country }
+                OPTIONAL { wd:{$wd_id} wdt:P17 ?p_country }
                 OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }
                 OPTIONAL { wd:{$wd_id} wdt:P1566 ?geoname }
                 OPTIONAL { wd:{$wd_id} wdt:P213 ?isni }";
       $wd = new wdtax_wikidata( $wd_id, $types, $where );
       update_term_meta( $term_id, 'schema_type',  'Place' );
+    } elseif ( 'Event' === $this->type_map[ $wd_type ]) {
+      $types = $this->event_property_types;
+      $where = "wd:{$wd_id} rdfs:label ?label .
+                wd:{$wd_id} schema:description ?description .
+                OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
+                OPTIONAL { wd:{$wd_id} wdt:P585 ?date }
+                OPTIONAL { wd:{$wd_id} wdt:P276 ?place .
+                           ?place wdt:P17 ?country }
+                OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }
+                OPTIONAL { wd:{$wd_id} wdt:P213 ?isni }";
+      $wd = new wdtax_wikidata( $wd_id, $types, $where );
+      update_term_meta( $term_id, 'schema_type',  'Event' );
     } else {
       update_term_meta( $term_id, 'schema_type',  'Thing' );
     }
@@ -517,10 +588,18 @@ class wdtax_taxonomy {
       return '';
     }
   }
+  function schema_creator( $term_id ) {
+    $term_meta = get_term_meta( $term_id );
+    if ( isset( $term_meta['wd_creator'] ) ) {
+      return ' by '.$this->schema_text( $term_id, 'wd_creator' );
+    } else {
+      return '';
+    }
+  }
   function schema_country( $term_id ) {
     $term_meta = get_term_meta( $term_id );
-    if ( isset( $term_meta['wd_country'] ) ) {
-      return ' in '.$this->schema_text( $term_id, 'wd_country' );
+    if ( isset( $term_meta['wd_place_country'] ) ) {
+      return ' in '.$this->schema_text( $term_id, 'wd_place_country' );
     } else {
       return '';
     }
@@ -538,10 +617,32 @@ class wdtax_taxonomy {
     $publ = $this->schema_publication_date( $term_id );
     return 'Book '.$auth.$publ.'. ';
   }
+  function schema_creativework_details( $term_id ) {
+    $type = ' A '.get_term_meta( $term_id, 'wd_type', True );
+    $creator = $this->schema_creator( $term_id );
+    return $type.$creator;
+  }
   function schema_place_details( $term_id ) {
     $descr = $this->schema_text( $term_id, 'wd_description' );
     $type = ' A '.get_term_meta( $term_id, 'wd_type', True );
     $country = $this->schema_country( $term_id );
     return $descr.'.'.$type.$country;
+  }
+  function schema_event_details( $term_id ) {
+    $type = ' A '.get_term_meta( $term_id, 'wd_type', True );
+    $date = ' which happened in '.$this->schema_text( $term_id, 'wd_date' );
+    $place = ' at '.$this->schema_text( $term_id, 'wd_place' );
+    $country = $this->schema_text( $term_id, 'wd_country' );
+    return $type.$date.$place.''.$country;
+  }
+  function schema_organization_details( $term_id ) {
+    $descr = $this->schema_text( $term_id, 'wd_description' );
+    $country = 'Location or headquarters'.
+                $this->schema_text( $term_id, 'wd_country' );
+    $founded = ' founded '.$this->schema_text( $term_id, 'wd_inception' );
+    $dissolved = ' dissolved '.$this->schema_text( $term_id, 'wd_dissolution' );
+    $text = ' located or headquarters in ';
+    $country = $this->schema_text( $term_id, 'wd_country' );
+    return $descr.$founded.$dissolved.$text.$country;
   }
 }
