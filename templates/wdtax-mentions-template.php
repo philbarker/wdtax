@@ -26,7 +26,7 @@ $type = get_term_meta( $term_id, 'schema_type', True );
 	<main id="main" class="site-main" role="main">
 		<header class="page-header">
 			<?php
-				echo '<h1 class="page-title">Pages about: ';
+				echo '<h1 class="page-title">Pages mentioning: ';
 				echo $wdtax_about_taxonomy->schema_text( $term_id, 'wd_name' );
 				echo '</h1>';
 				echo '<div class="taxonomy-description" > ';
