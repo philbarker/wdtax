@@ -523,7 +523,7 @@ class wdtax_taxonomy {
   }
   function schema_sameas_wd( $term_id ) {
     $term_meta = get_term_meta( $term_id );
-    $base_url = 'https://www.wikidata.org/entity/';
+    $base_url = 'http://www.wikidata.org/entity/';
     if ( isset( $term_meta['wd_id'] ) ) {
       $args = array(
         'tag'=>'link',
