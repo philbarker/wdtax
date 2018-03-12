@@ -11,6 +11,8 @@
  *
  * based on the twentysixteen archive and content templates
  */
+defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
+
 
 get_header();
 $term_id = get_queried_object_id();

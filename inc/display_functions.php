@@ -7,6 +7,8 @@
  * Author URI: http://people.pjjk.net/phil
  * @license GPL 2.0+
 */
+defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
+
 function get_custom_taxonomy_template( $archive_template ) {
   global $post;
   global $wdtax_dir;
