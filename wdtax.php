@@ -12,6 +12,7 @@
 defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
 
 $wdtax_dir = plugin_dir_path( __FILE__ );
+include_once( $wdtax_dir.'inc/option_functions.php');
 include_once( $wdtax_dir.'inc/taxonomy_class.php' );
 include_once( $wdtax_dir.'inc/wikidata_class.php' );
 include_once( $wdtax_dir.'inc/display_functions.php' );

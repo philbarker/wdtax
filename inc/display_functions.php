@@ -3,6 +3,7 @@
  * Package Name: wdtax
  * Description: functions related to displaying wikidata taxonomies
  * Version: 0
+ * Since: mvp0
  * Author: Phil Barker
  * Author URI: http://people.pjjk.net/phil
  * @license GPL 2.0+
