@@ -16,7 +16,8 @@ defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
 get_header();
 $term_id = get_queried_object_id();
 global $wp;
-global $wdtax_about_taxonomy; //instance of object from inc/taxonomy_class.php
+global $wdtax_taxonomies; //instance of object from inc/taxonomy_class.php
+$wdtax_taxonomy = $wdtax_taxonomies['about'];
 $term_meta = get_term_meta( $term_id );
 $type = get_term_meta( $term_id, 'schema_type', True );
 ?>
@@ -28,26 +29,26 @@ $type = get_term_meta( $term_id, 'schema_type', True );
 			<header class="page-header">
 				<?php
 				  echo '<h1 class="page-title">Pages about: ';
-					echo $wdtax_about_taxonomy->schema_text( $term_id, 'wd_name' );
+					echo $wdtax_taxonomy->schema_text( $term_id, 'wd_name' );
 					echo '</h1>';
           echo '<div class="taxonomy-description" > ';
 					if ( 'Person' === $type ){
-						echo $wdtax_about_taxonomy->schema_person_details( $term_id );
+						echo $wdtax_taxonomy->schema_person_details( $term_id );
 					} elseif ('Organization' === $type ) {
-						echo $wdtax_about_taxonomy->schema_organization_details( $term_id );
+						echo $wdtax_taxonomy->schema_organization_details( $term_id );
 					} elseif ('Book' === $type ) {
-						echo $wdtax_about_taxonomy->schema_book_details( $term_id );
+						echo $wdtax_taxonomy->schema_book_details( $term_id );
 					} elseif ('CreativeWork' === $type ) {
-						echo $wdtax_about_taxonomy->schema_creativework_details( $term_id );
+						echo $wdtax_taxonomy->schema_creativework_details( $term_id );
 					} elseif ('Place' === $type ) {
-						echo $wdtax_about_taxonomy->schema_place_details( $term_id );
+						echo $wdtax_taxonomy->schema_place_details( $term_id );
 					} elseif ('Event' === $type ) {
-						echo $wdtax_about_taxonomy->schema_event_details( $term_id );
+						echo $wdtax_taxonomy->schema_event_details( $term_id );
 					} else {
-						echo $wdtax_about_taxonomy->schema_text($term_id, 'wd_description');
+						echo $wdtax_taxonomy->schema_text($term_id, 'wd_description');
 					}
 					echo '</div>';
-					echo $wdtax_about_taxonomy->schema_sameas_all( $term_id );
+					echo $wdtax_taxonomy->schema_sameas_all( $term_id );
 				?>
 			</header><!-- .page-header -->
 
