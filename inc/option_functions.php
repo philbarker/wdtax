@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
  * functions to register options and create a settings page:
  *   wdtax_settings_init() sets up the settings, hooked into admin_init
  *   echo_wdtax_section() echos html for settings section
- *   echo_wdtax_rel_field( $args ) echos html for relationship settings
+ *   echo_wdtax_rel( $args ) echos html for relationship settings
  *   wdtax_options_page() adds page to options menu, hooked into admin_menu
  *   echo_wdtax_options_html() html for the wdtax options page
  * based on https://developer.wordpress.org/plugins/settings/custom-settings-page/
@@ -22,62 +22,70 @@ defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
 
 function wdtax_settings_init() {
   //sets up the settings
-  register_setting( 'wdtax', 'wdtax_options');
-  add_settings_section(
-    'wdtax',  //section id
-    __( 'Custom Taxonomy Settings', 'wdtax' ), //Section title
-    'echo_wdtax_section', //callback func to display html for section
-    'wdtax' //slug for options page
-  );
-  add_settings_field(
-    'wdtax_rel_field',  //field id; this one for relationship of taxons to post
-    __( 'Relationship', 'wdtax'), //field label
-    'echo_wdtax_rel_field',  //callback function to html for field
-    'wdtax',  //slug for options page
-    'wdtax',  //id of section
-    [  //params passed to callback function as args
-      'label_for'=>'wdtax_rel_field',  // @for attrib for form label tag
-      'class'=>'wdtax_row',            // @class attrib for tr tag in form
-      'wdtax_custom_data'=>'test'      // ?not used
-    ]
-  );
-  $post_types = array_keys( get_post_types( ['public'=>True] ) );
-  foreach ( $post_types as $type) {
-    $field_id = 'wdtax_'.$type.'_field';
-    $field_label = __('Use on '.$type, 'wdtax');
-    add_settings_field(
-      $field_id,  //field id; this one for types of post to show taxmy on
-      $field_label, //field label
-      'echo_wdtax_type_field',  //callback function to html for field
-      'wdtax',  //slug for options page
-      'wdtax',  //id of section
-      [  //params passed to callback function as args
-        'label_for'=>$field_id,  // @for attrib for form label tag
-        'class'=>'wdtax_row'            // @class attrib for tr tag in form
-      ]
-    );
+  register_setting( 'wdtax', 'wdtax_options'); //option_group, option_name
+  for ($n=1; $n<=2; $n++) {
+    wdtax_add_fields($n);
   }
 }
 add_action( 'admin_init', 'wdtax_settings_init');
 
-function echo_wdtax_section() {
-  // callback from add_settings_section, echos html for settings section
-  // currently there is no HTML
+function wdtax_add_fields($n=1) {
+  add_settings_section(
+    'wdtax'.$n,  //section id
+    __( 'Settings for Custom Taxonomy '.$n, 'wdtax' ), //Section title
+    'echo_wdtax_section', //callback func to display html for section
+    'wdtax' //slug for options page
+  );
+  add_settings_field(
+    'wdtax_rel',  //field id; this one for relationship of taxons to post
+    __( 'Relationship', 'wdtax'), //field label
+    'echo_wdtax_rel',  //callback function to html for field
+    'wdtax',  //slug for options page
+    'wdtax'.$n,  //id of section
+    [  //params passed to callback function as args
+      'label_for'=>'wdtax_rel',  // @for attrib for form label tag
+      'class'=>'wdtax_row',      // @class attrib for tr tag in form
+      'taxonomy_n'=>$n            // array number of taxonomy in wdtax_options
+    ]
+  );
+  $post_types = array_keys( get_post_types( ['public'=>True] ) );
+  foreach ( $post_types as $type) {
+    $field_label = __('Use on '.$type, 'wdtax');
+    add_settings_field(
+      $type,        //field id; this one for types of post to show taxmy on
+      $field_label, //field label
+      'echo_wdtax_type_field',  //callback function to html for field
+      'wdtax',  //slug for options page
+      'wdtax'.$n,  //id of section
+      [  //params passed to callback function as args
+        'label_for'=>$type,  // @for attrib for form label tag
+        'class'=>'wdtax_row',    // @class attrib for tr tag in form
+        'taxonomy_n'=>$n            // array number of taxonomy in wdtax_options
+      ]
+    );
+  }
 }
 
-function echo_wdtax_rel_field( $args ) {
+function echo_wdtax_section() {
+  // callback from add_settings_section, echos html for settings section
+
+}
+
+function echo_wdtax_rel( $args ) {
   // callback from add_settings_field, echos html for relationship settings
-  $options = get_option( 'wdtax_options' );
+  $options_arr = get_option( 'wdtax_options' );
+  $taxonomy_n = $args['taxonomy_n'];
+  $options = $options_arr[$taxonomy_n];
   $about = isset( $options[ $args['label_for'] ] )
             ? ( selected( $options[ $args['label_for'] ], 'about', false ) )
             : ( '' ); //true if option is set to about
   $mentions = isset( $options[ $args['label_for'] ] )
             ? ( selected( $options[ $args['label_for'] ], 'mentions', false ) )
             : ( '' );  //true if option is set to mentions
+  $name = 'wdtax_options['.$taxonomy_n.']['.esc_attr( $args['label_for'].']' );
   ?>
   <select id="<?php echo esc_attr( $args['label_for'] ); ?>"
-    data-custom="<?php echo esc_attr( $args['wdtax_custom_data'] ); ?>"
-    name="wdtax_options[<?php echo esc_attr( $args['label_for'] ); ?>]"
+          name=<?php echo esc_attr( $name ); ?>"
   >
     <option value="about" <?php echo esc_attr( $about ); ?>>
       <?php esc_html_e( 'about', 'wdtax' ); ?>
@@ -89,17 +97,18 @@ function echo_wdtax_rel_field( $args ) {
  <p class="description">
  <?php esc_html_e( 'The relationship between the post and term.', 'wporg' ); ?>
  <?php esc_html_e( 'Used for schema.org markup.', 'wporg' ); ?>
- </p>
+</p>
  <?php
 }
 
 function echo_wdtax_type_field( $args ) {
   // callback from add_settings_field, echos html for relationship settings
-  $options = get_option( 'wdtax_options' );
-  $option_name = esc_attr('wdtax_options['.$args[ 'label_for' ].']');
+  $options_arr = get_option( 'wdtax_options' );
+  $taxonomy_n = $args['taxonomy_n'];
+  $options = $options_arr[$taxonomy_n];
+  $option_name = esc_attr('wdtax_options['.$taxonomy_n.'][wdtax_types]['.$args[ 'label_for' ].']');
   $option_id = esc_attr( $args['label_for'] );
-  if (isset( $options [ $args['label_for'] ])
-      && $options [ $args['label_for'] ] ) {
+  if (isset( $options[ 'wdtax_types' ][ $args['label_for'] ]) ) {
         $checked = 'checked = "checked"';
       } else {
         $checked = '';
@@ -107,7 +116,7 @@ function echo_wdtax_type_field( $args ) {
   echo '<input type="checkbox"
                name='.$option_name.'
                id="'.$option_id.'"
-               value="True"
+               value="'.$option_id.'"
                '.$checked.' />';
 }
 
@@ -129,20 +138,6 @@ function echo_wdtax_options_html() {
   if ( ! current_user_can( 'manage_options' ) ) {
     return;  //do nothing if the user does not have authority to manage options
   }
-  // add error/update messages
-  // check if the user has submitted the settings
-  // wordpress will add the "settings-updated" $_GET parameter to the url
-  if ( isset( $_GET['settings-updated'] ) ) {
-    // add settings saved message with the class of "updated"
-    add_settings_error(
-      'wdtax_messages',
-      'wdtax_message',
-      __( 'wdtax settings saved', 'wdtax' ),
-      'updated'
-    );
-  }
-  // show error/update messages
-  settings_errors( 'wdtax_messages' );
   echo '<div class="wrap">';
   echo '<h1>';
   echo esc_html( get_admin_page_title() );
@@ -152,6 +147,8 @@ function echo_wdtax_options_html() {
   settings_fields( 'wdtax' );
   // output setting sections and their fields
   do_settings_sections( 'wdtax' );
-  submit_button( 'Save Settings' );
- echo '</form>';
+  submit_button( 'Save Taxonomy' );
+  echo '</form>';
+  $options = get_option( 'wdtax_options' );
+  echo '<br/> Options: ';print_r($options);
 }
