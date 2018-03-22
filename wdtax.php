@@ -20,8 +20,8 @@ $wdtax_taxonomies = wdtax_init_taxonomies( );
 
 function wdtax_init_taxonomies( ) {
 	$t_arr = array();  // will be an array of taxonomies
-	$options_arr = get_option( 'wdtax_options' );
-  if ( isset( $options_arr ) ) {
+	$options_arr = get_option( 'wdtax_options' ); //returns False if no options
+  if ( $options_arr ) {
     $keys = array_keys( $options_arr );
   } else {
     $keys = array();
