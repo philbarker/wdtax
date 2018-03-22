@@ -23,101 +23,118 @@ defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
 function wdtax_settings_init() {
   //sets up the settings
   register_setting( 'wdtax', 'wdtax_options'); //option_group, option_name
-  for ($n=1; $n<=2; $n++) {
-    wdtax_add_fields($n);
-  }
-}
-add_action( 'admin_init', 'wdtax_settings_init');
-
-function wdtax_add_fields($n=1) {
   add_settings_section(
-    'wdtax'.$n,  //section id
-    __( 'Settings for Custom Taxonomy '.$n, 'wdtax' ), //Section title
+    'wdtax',  //section id
+    __( 'Create Custom Taxonomies for', 'wdtax' ), //Section title
     'echo_wdtax_section', //callback func to display html for section
     'wdtax' //slug for options page
   );
   add_settings_field(
-    'wdtax_rel',  //field id; this one for relationship of taxons to post
+    'wdtax_taxonomies',  //field id; this one for relationship of taxons to post
     __( 'Relationship', 'wdtax'), //field label
     'echo_wdtax_rel',  //callback function to html for field
     'wdtax',  //slug for options page
-    'wdtax'.$n,  //id of section
+    'wdtax',  //id of section
     [  //params passed to callback function as args
       'label_for'=>'wdtax_rel',  // @for attrib for form label tag
       'class'=>'wdtax_row',      // @class attrib for tr tag in form
+    ]
+  );
+  $options_arr = get_option( 'wdtax_options' );
+  if ( isset( $options_arr['rels'] ) ) {
+    $rels_set = $options_arr['rels'];
+  } else {
+    $rels_set = array();
+  }
+  foreach ( $rels_set as $rel ) {
+    wdtax_add_fields($rel);
+  }
+}
+add_action( 'admin_init', 'wdtax_settings_init');
+
+function wdtax_add_fields($n) {
+  add_settings_section(
+    'wdtax'.$n,  //section id
+    __( 'What types of post is the \''.$n.'\' taxonomy used on?', 'wdtax' ),
+                 //Section title
+    'echo_wdtax_section', //callback func to display html for section
+    'wdtax' //slug for options page
+  );
+  add_settings_field(
+    'wdtax_type',        //field id; this one for types of post to show taxmy on
+    __('Use on these types of post:', 'wdtax' ), //field label
+    'echo_wdtax_type_field',  //callback function to html for field
+    'wdtax',  //slug for options page
+    'wdtax'.$n,  //id of section
+    [  //params passed to callback function as args
+      'label_for'=>'wdtax_type',  // @for attrib for form label tag
+      'class'=>'wdtax_row',    // @class attrib for tr tag in form
       'taxonomy_n'=>$n            // array number of taxonomy in wdtax_options
     ]
   );
-  $post_types = array_keys( get_post_types( ['public'=>True] ) );
-  foreach ( $post_types as $type) {
-    $field_label = __('Use on '.$type, 'wdtax');
-    add_settings_field(
-      $type,        //field id; this one for types of post to show taxmy on
-      $field_label, //field label
-      'echo_wdtax_type_field',  //callback function to html for field
-      'wdtax',  //slug for options page
-      'wdtax'.$n,  //id of section
-      [  //params passed to callback function as args
-        'label_for'=>$type,  // @for attrib for form label tag
-        'class'=>'wdtax_row',    // @class attrib for tr tag in form
-        'taxonomy_n'=>$n            // array number of taxonomy in wdtax_options
-      ]
-    );
-  }
 }
-
 function echo_wdtax_section() {
   // callback from add_settings_section, echos html for settings section
 
 }
-
 function echo_wdtax_rel( $args ) {
   // callback from add_settings_field, echos html for relationship settings
   $options_arr = get_option( 'wdtax_options' );
-  $taxonomy_n = $args['taxonomy_n'];
-  $options = $options_arr[$taxonomy_n];
-  $about = isset( $options[ $args['label_for'] ] )
-            ? ( selected( $options[ $args['label_for'] ], 'about', false ) )
-            : ( '' ); //true if option is set to about
-  $mentions = isset( $options[ $args['label_for'] ] )
-            ? ( selected( $options[ $args['label_for'] ], 'mentions', false ) )
-            : ( '' );  //true if option is set to mentions
-  $name = 'wdtax_options['.$taxonomy_n.']['.esc_attr( $args['label_for'].']' );
-  ?>
-  <select id="<?php echo esc_attr( $args['label_for'] ); ?>"
-          name=<?php echo esc_attr( $name ); ?>"
-  >
-    <option value="about" <?php echo esc_attr( $about ); ?>>
-      <?php esc_html_e( 'about', 'wdtax' ); ?>
-    </option>
-    <option value="mentions" <?php echo esc_attr( $mentions ); ?>>
-      <?php esc_html_e( 'mentions', 'wporg' ); ?>
-    </option>
- </select>
- <p class="description">
- <?php esc_html_e( 'The relationship between the post and term.', 'wporg' ); ?>
- <?php esc_html_e( 'Used for schema.org markup.', 'wporg' ); ?>
-</p>
- <?php
+  if ( isset( $options_arr['rels'] ) ) {
+    $rels_set = $options_arr['rels'];
+  } else {
+    $rels_set = array();
+  }
+  $rels_arr = array('about','mentions','citation','isBasedOn');
+//to do set checked from options
+  foreach ($rels_arr as $rel) {
+    if (isset( $rels_set[$rel] ) && $rels_set[ $rel ]) {
+      $checked = 'checked = "checked"';
+    } else {
+      $checked = '';
+    }
+    echo '<input type="checkbox"
+                 name="wdtax_options[rels]['.$rel.']"
+                 id="'.$rel.'"
+                 value="'.$rel.'"
+                 '.$checked.' /> ';
+    echo $rel.'<br />';
+  }
+  echo '<p class="description">';
+  echo esc_html_e( 'The relationships between posts and terms ', 'wporg' );
+  echo esc_html_e( 'for which you want taxonomies. ' , 'wporg' );
+  echo '<br />';
+  echo esc_html_e( ' Used for schema.org markup.', 'wporg' );
+  echo '</p>';
+  submit_button( 'Create Taxonomies' );
 }
 
 function echo_wdtax_type_field( $args ) {
   // callback from add_settings_field, echos html for relationship settings
   $options_arr = get_option( 'wdtax_options' );
   $taxonomy_n = $args['taxonomy_n'];
-  $options = $options_arr[$taxonomy_n];
-  $option_name = esc_attr('wdtax_options['.$taxonomy_n.'][wdtax_types]['.$args[ 'label_for' ].']');
-  $option_id = esc_attr( $args['label_for'] );
-  if (isset( $options[ 'wdtax_types' ][ $args['label_for'] ]) ) {
-        $checked = 'checked = "checked"';
-      } else {
-        $checked = '';
-      }
-  echo '<input type="checkbox"
-               name='.$option_name.'
-               id="'.$option_id.'"
-               value="'.$option_id.'"
-               '.$checked.' />';
+  if ( isset ($options_arr[$taxonomy_n] ) ) {
+    $options = $options_arr[$taxonomy_n];
+  } else {
+    $options = array();
+  }
+  $post_types = array_keys( get_post_types( ['public'=>True] ) );
+  foreach ( $post_types as $type) {
+    $option_name = esc_attr('wdtax_options['.$taxonomy_n.'][wdtax_types]['.$type.']');
+    $option_id = esc_attr( $type );
+    if (isset( $options[ 'wdtax_types' ][ $type ]) ) {
+          $checked = 'checked = "checked"';
+    } else {
+      $checked = '';
+    }
+    echo '<input type="checkbox"
+                 name='.$option_name.'
+                 id="'.$option_id.'"
+                 value="'.$option_id.'"
+                 '.$checked.' />';
+    echo $type.'<br />';
+  }
+  submit_button( 'Save Taxonomies' );
 }
 
 function wdtax_options_page() {
@@ -147,8 +164,6 @@ function echo_wdtax_options_html() {
   settings_fields( 'wdtax' );
   // output setting sections and their fields
   do_settings_sections( 'wdtax' );
-  submit_button( 'Save Taxonomy' );
   echo '</form>';
   $options = get_option( 'wdtax_options' );
-  echo '<br/> Options: ';print_r($options);
 }

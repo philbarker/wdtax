@@ -15,9 +15,21 @@ defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
 
 get_header();
 $term_id = get_queried_object_id();
+$term = get_term( $term_id );
+$wdtax_rel = str_replace('wdtax_','',$term->taxonomy);
+echo ($wdtax_rel);
+if ('about' == $wdtax_rel) {
+	$heading = 'Pages about: ';
+} elseif ( 'mentions' == $wdtax_rel ) {
+	$heading = 'Pages that mention: ';
+} elseif ( 'citation' == $wdtax_rel ) {
+	$heading = 'Pages citing: ';
+} else  {
+	$heading = 'Pages that '.$wdtax_rel.': ';
+}
 global $wp;
 global $wdtax_taxonomies; //instance of object from inc/taxonomy_class.php
-$wdtax_taxonomy = $wdtax_taxonomies['about'];
+$wdtax_taxonomy = $wdtax_taxonomies[$wdtax_rel];
 $term_meta = get_term_meta( $term_id );
 $type = get_term_meta( $term_id, 'schema_type', True );
 ?>
@@ -28,7 +40,7 @@ $type = get_term_meta( $term_id, 'schema_type', True );
 		<main id="main" class="site-main" role="main">
 			<header class="page-header">
 				<?php
-				  echo '<h1 class="page-title">Pages about: ';
+				  echo '<h1 class="page-title">'.$heading;
 					echo $wdtax_taxonomy->schema_text( $term_id, 'wd_name' );
 					echo '</h1>';
           echo '<div class="taxonomy-description" > ';
@@ -58,13 +70,15 @@ $type = get_term_meta( $term_id, 'schema_type', True );
 
 ?>
 <article id="post-<?php the_ID(); ?>" <?php post_class(); ?>
-	property="subjectOf" resource="<?php echo( esc_url( get_permalink() ) )?>"
+	resource="<?php echo( esc_url( get_permalink() ) )?>"
 	typeof="WebPage">
 	<header class="entry-header">
 		<?php the_title( sprintf( '<h3 property="name"><a href="%s">', esc_url( get_permalink() ) ), '</a></h3>' ); ?>
 	</header><!-- .entry-header -->
 
 	<?php the_excerpt(); ?>
+	<link property="<?php echo $wdtax_rel ?>"
+	      href="<?php echo home_url( $wp->request ).'#id'; ?>" />
 
 </article><!-- #post-## -->
 <?php
