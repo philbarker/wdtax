@@ -66,7 +66,7 @@ function wdtax_post_terms( $atts ) {
   if ($custom_taxonomy == get_taxonomies(['name'=>$custom_taxonomy])){
     $widgettext = get_the_term_list($id, $custom_taxonomy, ' ', ' ', ' ');
   } else {
-    $widgettext = 'taxonomy '.$custom_taxonomy.' does not exist';
+    $widgettext = __('Taxonomy does not exist: ', 'wdtax').$custom_taxonomy;
   }
   return $widgettext;
 }
