@@ -63,7 +63,8 @@ function wdtax_post_terms( $atts ) {
 // based on http://www.wpbeginner.com/plugins/how-to-display-custom-taxonomy-terms-in-wordpress-sidebar-widgets/
   extract( shortcode_atts( array( 'custom_taxonomy' => '', ), $atts ) );
   $id = get_the_ID();
-  if ($custom_taxonomy == get_taxonomies(['name'=>$custom_taxonomy])){
+  $tax_arr = get_taxonomies(  );
+  if ( array_key_exists( $custom_taxonomy, $tax_arr ) ) {
     $widgettext = get_the_term_list($id, $custom_taxonomy, ' ', ' ', ' ');
   } else {
     $widgettext = __('Taxonomy does not exist: ', 'wdtax').$custom_taxonomy;

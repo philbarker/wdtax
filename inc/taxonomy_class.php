@@ -173,7 +173,7 @@ class wdtax_taxonomy {
     	'hierarchical' => false,
     	'show_admin_column' => true,
     	'show_in_menu' => true,
-	    'rewrite'      => array( 'slug' => $p_name ),
+	    'rewrite'      => array( 'slug' => str_replace(' ','-',$p_name) ),
 	    'description'  => 'Indexes '.$p_name.' mentioned in articles',
 	    'sort'         => true
 	  );
