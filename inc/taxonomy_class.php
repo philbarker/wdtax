@@ -148,6 +148,9 @@ class wdtax_taxonomy {
     */
     if ( empty( $s_name ) ) $s_name = $taxonomy;
    	if ( empty( $p_name ) )	$p_name = $taxonomy.'s';
+    $slug = str_replace(' ','-',strtolower($p_name));
+    $p_name = ucwords($p_name);
+    $s_name = ucwords($s_name);
     $this->id = $taxonomy;
     $this->type = $type;
     $this->args = array(
@@ -173,7 +176,7 @@ class wdtax_taxonomy {
     	'hierarchical' => false,
     	'show_admin_column' => true,
     	'show_in_menu' => true,
-	    'rewrite'      => array( 'slug' => str_replace(' ','-',$p_name) ),
+	    'rewrite'      => array( 'slug' => $slug ),
 	    'description'  => 'Indexes '.$p_name.' mentioned in articles',
 	    'sort'         => true
 	  );
