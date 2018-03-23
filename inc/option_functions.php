@@ -165,5 +165,5 @@ function echo_wdtax_options_html() {
   // output setting sections and their fields
   do_settings_sections( 'wdtax' );
   echo '</form>';
-  $options = get_option( 'wdtax_options' );
+  echo '</div>';
 }
