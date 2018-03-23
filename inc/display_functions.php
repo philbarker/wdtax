@@ -62,10 +62,12 @@ function wdtax_post_terms( $atts ) {
 // [wdtax_post_terms custom_taxonomy=customtaxonomyname]
 // based on http://www.wpbeginner.com/plugins/how-to-display-custom-taxonomy-terms-in-wordpress-sidebar-widgets/
   extract( shortcode_atts( array( 'custom_taxonomy' => '', ), $atts ) );
-//  global $post;
-//  $id = $post->ID;
   $id = get_the_ID();
-  $widgettext = get_the_term_list($id, $custom_taxonomy, ' ', ' ', ' ');
+  if ($custom_taxonomy == get_taxonomies(['name'=>$custom_taxonomy])){
+    $widgettext = get_the_term_list($id, $custom_taxonomy, ' ', ' ', ' ');
+  } else {
+    $widgettext = 'taxonomy '.$custom_taxonomy.' does not exist';
+  }
   return $widgettext;
 }
 add_shortcode( 'wdtax_post_terms', 'wdtax_post_terms' );
