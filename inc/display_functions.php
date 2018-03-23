@@ -10,21 +10,30 @@
 */
 defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
 
-function get_custom_taxonomy_template( $archive_template ) {
+function wdtax_custom_taxonomy_template( $archive_template ) {
   global $post;
   global $wdtax_dir;
   $archive_template = $wdtax_dir.'/templates/wdtax-template.php';
-
-/*
-  if ( is_tax ( 'wdtax_about' ) ) {
-    $archive_template = $wdtax_dir.'/templates/wdtax-about-template.php';
-  } elseif ( is_tax ( 'wdtax_mentions' ) ) {
-    $archive_template = $wdtax_dir.'/templates/wdtax-mentions-template.php';
-  }
-  */
   return $archive_template;
 }
-add_filter( 'archive_template', 'get_custom_taxonomy_template' ) ;
+add_filter( 'archive_template', 'wdtax_custom_taxonomy_template' ) ;
+
+function wdtax_admin_notice( $class, $msg ) {
+  if ( 'notice-error'== $class ) {
+    $message = __('wdtax error: ', 'wdtax').$msg;
+  } elseif ( 'notice-warning'== $class ) {
+    $message = __('wdtax warning: ', 'wdtax').$msg;
+  } elseif ( 'notice-info'== $class ) {
+    $message = __('wdtax info: ', 'wdtax').$msg;
+  } else {
+    $message = $msg;
+  }
+      ?>
+    <div class="notice <?php echo esc_attr( $class ) ?> is-dismissible">
+        <p><?php echo esc_html( $message ); ?></p>
+    </div>
+    <?php
+}
 
 function wdtax_list_terms( $atts ) {
 // creates a shortcode wdtax_terms that requires one parameter custom_taxonomy.
