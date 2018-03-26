@@ -138,7 +138,8 @@ function echo_wdtax_type_field( $args ) {
 }
 
 function wdtax_options_page() {
-  //add page to options menu
+  //adds pages to admin menu
+  //1. add page to options menu
   add_submenu_page(
     'options-general.php', //slug of parent page
     __('Wikidata Taxonomy settings', 'wdtax'), //page title
@@ -147,6 +148,30 @@ function wdtax_options_page() {
     'wdtax', //menu slug
     'echo_wdtax_options_html' //callback function; echos html for page
   );
+  //2. add own admin page, linked to settings
+  add_menu_page(
+    __('Wikidata Taxonomy', 'wdtax'), //page title
+    __('wdTaxonomy', 'wdtax'), //menu text
+    'manage_options', //capability
+    'wdtax_2', //menu slug
+    'echo_wdtax_options_html', //callback function; echos html for page
+    'dashicons-admin-generic', //icon
+    '40' //position
+  );
+  //3. add access to taxonomies under own admin page
+  $options_arr = get_option( 'wdtax_options' );
+  if ( isset( $options_arr['rels'] ) ) {
+    foreach ( $options_arr['rels'] as $rel ) {
+      add_submenu_page(
+        'wdtax_2', //slug of parent page
+        __('edit '.$rel.' terms', 'wdtax'), //page title
+        $rel.__(' taxonomy', 'wdtax'), //menu text
+        'manage_options', //capability
+        'edit-tags.php?taxonomy=wdtax_'.$rel, //menu slug
+        null //callback function; echos html for page
+      );
+    }
+  }
 }
 add_action( 'admin_menu', 'wdtax_options_page' );
 
@@ -166,4 +191,16 @@ function echo_wdtax_options_html() {
   do_settings_sections( 'wdtax' );
   echo '</form>';
   echo '</div>';
+}
+
+function echo_wdtax_menu_html() {
+  //html for the wdtax options page
+  if ( ! current_user_can( 'manage_options' ) ) {
+    return;  //do nothing if the user does not have authority to manage options
+  }
+  echo '<div class="wrap">';
+  echo '<h1>';
+  echo esc_html( get_admin_page_title() );
+  echo '</h1>';
+  echo '<p>Settings for Wikidata Taxonomies</p>';
 }

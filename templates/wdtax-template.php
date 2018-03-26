@@ -40,7 +40,7 @@ $type = get_term_meta( $term_id, 'schema_type', True );
 		<main id="main" class="site-main" role="main">
 			<header class="page-header">
 				<?php
-				  echo '<h1 class="page-title">'.$heading;
+				  echo '<h1 class="page-title">Index page for ';
 					echo $wdtax_taxonomy->schema_text( $term_id, 'wd_name' );
 					echo '</h1>';
           echo '<div class="taxonomy-description" > ';
