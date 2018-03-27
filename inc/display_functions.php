@@ -105,7 +105,7 @@ function wdtax_archive_page_header( $term_id ) {
   echo '</div>';
   echo $wdtax_taxonomy->schema_sameas_all( $term_id );
 }
-function wdtax_archive_section_header( $term_id, $rel ) {
+function wdtax_archive_section_heading( $term_id, $rel ) {
   global $wdtax_taxonomies;
   $term = get_term( $term_id );
   $wdtax_rel = str_replace('wdtax_','',$term->taxonomy);

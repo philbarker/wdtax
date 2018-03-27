@@ -15,7 +15,6 @@ defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
 
 get_header();
 global $wp;
-global $wdtax_taxonomies; //instance of object from inc/taxonomy_class.php
 $term_id = get_queried_object_id();
 ?>
 	<div id="primary" class="content-area"
@@ -24,16 +23,11 @@ $term_id = get_queried_object_id();
 			 typeof ="<?php echo  $type ?>" >
 		<main id="main" class="site-main" role="main">
 			<header class="page-header">
-				<?php
-				  wdtax_archive_page_header( $term_id );
-				?>
+				<?php wdtax_archive_page_header( $term_id ); ?>
 			</header><!-- .page-header -->
 <?php
 $options_arr = get_option( 'wdtax_options' );
 $term = get_term( $term_id );
-$wdtax_rel = str_replace('wdtax_','',$term->taxonomy);
-$wdtax_taxonomy = $wdtax_taxonomies[$wdtax_rel];
-
 if ( isset( $options_arr['rels'] ) ) {
 	//multiloop for each relation taxonomy
 	foreach ( $options_arr['rels'] as $rel ) {
@@ -49,23 +43,22 @@ if ( isset( $options_arr['rels'] ) ) {
 		);
 		$wdtax_query = new WP_Query( $args );
 		if ( $wdtax_query->have_posts() ) :
-			wdtax_archive_section_header( $term_id, $rel );
+			wdtax_archive_section_heading( $term_id, $rel );
 			// Start the Loop.
 			while ( $wdtax_query->have_posts() ) : $wdtax_query->the_post();
 		?>
-				<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>
-					resource="<?php echo( esc_url( get_permalink() ) )?>"
-					typeof="WebPage">
-					<header class="entry-header">
-						<?php the_title( sprintf( '<h3 property="name"><a href="%s">',
-						                           esc_url( get_permalink() ) ),
-																			 '</a></h3>' ); ?>
-					</header><!-- .entry-header -->
-
-					<?php the_excerpt(); ?>
-					<link property="<?php echo $rel ?>"
-					      href="<?php echo home_url( $wp->request ).'#id'; ?>" />
-				</article><!-- #post-## -->
+			<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>
+				resource="<?php echo( esc_url( get_permalink() ) )?>"
+				typeof="WebPage">
+				<header class="entry-header">
+					<?php the_title( sprintf( '<h3 property="name"><a href="%s">',
+					                           esc_url( get_permalink() ) ),
+																		 '</a></h3>' ); ?>
+				</header><!-- .entry-header -->
+				<?php the_excerpt(); ?>
+				<link property="<?php echo $rel ?>"
+				      href="<?php echo home_url( $wp->request ).'#id'; ?>" />
+			</article><!-- #post-## -->
 		<?php
 		endwhile; //a loop
 		endif;
