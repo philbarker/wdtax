@@ -16,6 +16,7 @@ defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
 get_header();
 global $wp;
 $term_id = get_queried_object_id();
+$type = get_term_meta( $term_id, 'schema_type', True );
 ?>
 	<div id="primary" class="content-area"
 	     vocab="http://schema.org/"
