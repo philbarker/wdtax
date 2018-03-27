@@ -73,5 +73,52 @@ function wdtax_post_terms( $atts ) {
 }
 add_shortcode( 'wdtax_post_terms', 'wdtax_post_terms' );
 
-
+/***
+ * Functions for taxonomy archive pages
+ */
+function wdtax_archive_page_header( $term_id ) {
+  global $wdtax_taxonomies;
+  $term = get_term( $term_id );
+  $wdtax_rel = str_replace('wdtax_','',$term->taxonomy);
+  $wdtax_taxonomy = $wdtax_taxonomies[$wdtax_rel];
+  //$term_meta = get_term_meta( $term_id );
+  $type = get_term_meta( $term_id, 'schema_type', True );
+  echo '<h1 class="page-title">Index page for ';
+  echo $wdtax_taxonomy->schema_text( $term_id, 'wd_name' );
+  echo '</h1>';
+  echo '<div class="taxonomy-description" > ';
+  if ( 'Person' === $type ){
+   echo $wdtax_taxonomy->schema_person_details( $term_id );
+  } elseif ('Organization' === $type ) {
+   echo $wdtax_taxonomy->schema_organization_details( $term_id );
+  } elseif ('Book' === $type ) {
+   echo $wdtax_taxonomy->schema_book_details( $term_id );
+  } elseif ('CreativeWork' === $type ) {
+   echo $wdtax_taxonomy->schema_creativework_details( $term_id );
+  } elseif ('Place' === $type ) {
+   echo $wdtax_taxonomy->schema_place_details( $term_id );
+  } elseif ('Event' === $type ) {
+   echo $wdtax_taxonomy->schema_event_details( $term_id );
+  } else {
+   echo $wdtax_taxonomy->schema_text($term_id, 'wd_description');
+  }
+  echo '</div>';
+  echo $wdtax_taxonomy->schema_sameas_all( $term_id );
+}
+function wdtax_archive_section_header( $term_id, $rel ) {
+  global $wdtax_taxonomies;
+  $term = get_term( $term_id );
+  $wdtax_rel = str_replace('wdtax_','',$term->taxonomy);
+  $wdtax_taxonomy = $wdtax_taxonomies[$wdtax_rel];
+	if ('about' == $rel) {
+		$heading = 'Pages about ';
+	} elseif ( 'mentions' == $rel ) {
+		$heading = 'Pages that mention ';
+	} elseif ( 'citation' == $rel ) {
+		$heading = 'Pages citing ';
+	} else  {
+		$heading = 'Pages that '.$rel.': ';
+	}
+	echo '<h2>'.$heading.$term->name.'</h2>';
+}
 ?>
