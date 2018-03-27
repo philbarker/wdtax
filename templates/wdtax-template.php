@@ -14,23 +14,13 @@
 defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
 
 get_header();
+global $wp;
+global $wdtax_taxonomies; //instance of object from inc/taxonomy_class.php
 $term_id = get_queried_object_id();
 $term = get_term( $term_id );
 $wdtax_rel = str_replace('wdtax_','',$term->taxonomy);
-echo ($wdtax_rel);
-if ('about' == $wdtax_rel) {
-	$heading = 'Pages about: ';
-} elseif ( 'mentions' == $wdtax_rel ) {
-	$heading = 'Pages that mention: ';
-} elseif ( 'citation' == $wdtax_rel ) {
-	$heading = 'Pages citing: ';
-} else  {
-	$heading = 'Pages that '.$wdtax_rel.': ';
-}
-global $wp;
-global $wdtax_taxonomies; //instance of object from inc/taxonomy_class.php
 $wdtax_taxonomy = $wdtax_taxonomies[$wdtax_rel];
-$term_meta = get_term_meta( $term_id );
+//$term_meta = get_term_meta( $term_id );
 $type = get_term_meta( $term_id, 'schema_type', True );
 ?>
 	<div id="primary" class="content-area"
@@ -63,38 +53,64 @@ $type = get_term_meta( $term_id, 'schema_type', True );
 					echo $wdtax_taxonomy->schema_sameas_all( $term_id );
 				?>
 			</header><!-- .page-header -->
-
-		<?php if ( have_posts() ) :
-			// Start the Loop.
-			while ( have_posts() ) : the_post();
-
-?>
-<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>
-	resource="<?php echo( esc_url( get_permalink() ) )?>"
-	typeof="WebPage">
-	<header class="entry-header">
-		<?php the_title( sprintf( '<h3 property="name"><a href="%s">', esc_url( get_permalink() ) ), '</a></h3>' ); ?>
-	</header><!-- .entry-header -->
-
-	<?php the_excerpt(); ?>
-	<link property="<?php echo $wdtax_rel ?>"
-	      href="<?php echo home_url( $wp->request ).'#id'; ?>" />
-
-</article><!-- #post-## -->
 <?php
-			endwhile;
+$options_arr = get_option( 'wdtax_options' );
+if ( isset( $options_arr['rels'] ) ) {
+	//multiloop for each relation taxonomy
+	foreach ( $options_arr['rels'] as $rel ) {
+		$args = array(
+			'post_type' => 'any',
+			'tax_query' => array(
+				array(
+					'taxonomy' => 'wdtax_'.$rel,
+					'field'    => 'name',
+					'terms'    => array( $term->name )
+				)
+			)
+		);
+		$wdtax_query = new WP_Query( $args );
+		if ('about' == $rel) {
+			$heading = 'Pages about ';
+		} elseif ( 'mentions' == $rel ) {
+			$heading = 'Pages that mention ';
+		} elseif ( 'citation' == $rel ) {
+			$heading = 'Pages citing ';
+		} else  {
+			$heading = 'Pages that '.$rel.': ';
+		}
+		if ( $wdtax_query->have_posts() ) :
+			echo '<h2>'.$heading.$wdtax_taxonomy->schema_text( $term_id, 'wd_name' ).'</h2>';
+			// Start the Loop.
+			while ( $wdtax_query->have_posts() ) : $wdtax_query->the_post();
+		?>
+				<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>
+					resource="<?php echo( esc_url( get_permalink() ) )?>"
+					typeof="WebPage">
+					<header class="entry-header">
+						<?php the_title( sprintf( '<h3 property="name"><a href="%s">', esc_url( get_permalink() ) ), '</a></h3>' ); ?>
+					</header><!-- .entry-header -->
 
-			// Previous/next page navigation.
-			the_posts_pagination( array(
-				'prev_text'          => __( 'Previous page', 'twentysixteen' ),
-				'next_text'          => __( 'Next page', 'twentysixteen' ),
-				'before_page_number' => '<span class="meta-nav screen-reader-text">' . __( 'Page', 'twentysixteen' ) . ' </span>',
-			) );
+					<?php the_excerpt(); ?>
+					<link property="<?php echo $rel ?>"
+					      href="<?php echo home_url( $wp->request ).'#id'; ?>" />
 
-		// If no content, include the "No posts found" template.
-		else :
-			get_template_part( 'template-parts/content', 'none' );
+				</article><!-- #post-## -->
+		<?php
+		endwhile; //a loop
 		endif;
+		wp_reset_postdata();
+	} //end multiloop over relation taxonomies
+} else {
+	//no relation taxonomies
+	get_template_part( 'template-parts/content', 'none' );
+}
+// Previous/next page navigation.
+the_posts_pagination( array(
+	'prev_text'          => __( 'Previous page', 'twentysixteen' ),
+	'next_text'          => __( 'Next page', 'twentysixteen' ),
+	'before_page_number' => '<span class="meta-nav screen-reader-text">' . __( 'Page', 'twentysixteen' ) . ' </span>',
+) );
+
 		?>
 
 		</main><!-- .site-main -->
