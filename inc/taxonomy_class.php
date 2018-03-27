@@ -78,11 +78,13 @@ class wdtax_taxonomy {
     'label'=>'',
     'description'=>'',
     'type'=>'Label',
+    'image'=>''
   );
   public $person_property_types = array(
     'label'=>'',
     'description'=>'',
     'type'=>'Label',
+    'image'=>'',
     'dob'=>'Year',
     'pob'=>'Label',
     'cob'=>'Label',
@@ -96,6 +98,7 @@ class wdtax_taxonomy {
     'label'=>'',
     'description'=>'',
     'type'=>'Label',
+    'image'=>'',
     'inception'=>'Year',
     'dissolution'=>'Year',
     'country'=>'Label',
@@ -106,6 +109,7 @@ class wdtax_taxonomy {
     'label'=>'',
     'description'=>'',
     'type'=>'Label',
+    'image'=>'',
     'pubdate'=>'Year',
     'author'=>'Label',
     'viaf' => '',
@@ -115,6 +119,7 @@ class wdtax_taxonomy {
     'label'=>'',
     'description'=>'',
     'type'=>'Label',
+    'image'=>'',
     'pubdate'=>'Year',
     'creator'=>'Label',
     'viaf' => '',
@@ -124,6 +129,7 @@ class wdtax_taxonomy {
     'label'=>'',
     'description'=>'',
     'type'=>'Label',
+    'image'=>'',
     'p_country'=>'Label',
     'viaf' => '',
     'isni' => '',
@@ -133,6 +139,7 @@ class wdtax_taxonomy {
     'label'=>'',
     'description'=>'',
     'type'=>'Label',
+    'image'=>'',
     'date'=>'Year',
     'place'=>'Label',
     'country'=>'Label',
@@ -332,6 +339,7 @@ class wdtax_taxonomy {
       $where = "wd:{$wd_id} rdfs:label ?label .
                 wd:{$wd_id} schema:description ?description .
                 OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
+							  OPTIONAL { wd:{$wd_id} wdt:P18 ?image }
                 OPTIONAL { wd:{$wd_id} wdt:P569 ?dob }
                 OPTIONAL { wd:{$wd_id} wdt:P19 ?pob .
                            ?pob wdt:P17 ?cob }
