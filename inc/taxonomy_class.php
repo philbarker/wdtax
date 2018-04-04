@@ -675,11 +675,19 @@ class wdtax_taxonomy {
     if ( isset( $term_meta['wd_image'] ) ) {
       $args  = array(
         'tag' => 'img',
-        'class' => 'thumbnail'
+        'class' => 'wdtax-thumbnail'
       );
       return $this->schema_text( $term_id, 'wd_image', $args );
     } else {
       return '';
     }
+  }
+  function schema_thumbnail( $term_id ) {
+    $term_meta = get_term_meta( $term_id );
+    if ( isset( $term_meta['wd_image'] ) ) {
+      $wd_image = $term_meta['wd_image'];
+
+    }
+
   }
 }

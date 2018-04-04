@@ -12,7 +12,6 @@
  * based on the twentysixteen archive and content templates
  */
 defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
-
 get_header();
 global $wp;
 $term_id = get_queried_object_id();
@@ -25,7 +24,6 @@ $type = get_term_meta( $term_id, 'schema_type', True );
 		<main id="main" class="site-main" role="main">
 			<header class="page-header">
 				<?php wdtax_archive_page_header( $term_id ); ?>
-				<?php wdtax_archive_page_image( $term_id ); ?>
 			</header><!-- .page-header -->
 <?php
 $options_arr = get_option( 'wdtax_options' );

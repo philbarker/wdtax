@@ -18,6 +18,13 @@ function wdtax_custom_taxonomy_template( $archive_template ) {
 }
 add_filter( 'archive_template', 'wdtax_custom_taxonomy_template' ) ;
 
+function wdtax_add_stylesheet() {
+  $src = plugins_url('../templates/wdtax-style.css', __FILE__ );
+  wp_register_style( 'wdtax_style', $src );
+  wp_enqueue_style( 'wdtax_style' );
+}
+add_action('wp_enqueue_scripts', 'wdtax_add_stylesheet');
+
 function wdtax_admin_notice( $class, $msg ) {
   if ( 'notice-error'== $class ) {
     $message = __('wdtax error: ', 'wdtax').$msg;
@@ -85,7 +92,8 @@ function wdtax_archive_page_header( $term_id ) {
   echo '<h1 class="page-title">Index page for ';
   echo $wdtax_taxonomy->schema_text( $term_id, 'wd_name' );
   echo '</h1>';
-  echo '<div class="taxonomy-description" > ';
+  echo '<div class="taxonomy-description  wdtax-clearfix" > ';
+  wdtax_archive_page_image( $term_id );
   if ( 'Person' === $type ){
    echo $wdtax_taxonomy->schema_person_details( $term_id );
   } elseif ('Organization' === $type ) {
