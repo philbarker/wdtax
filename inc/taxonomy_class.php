@@ -72,7 +72,8 @@ class wdtax_taxonomy {
     'location' => 'Place',
     'organization' => 'Organization',
     'abstract object' => 'Intangible',
-    'object' => 'Thing'
+    'object' => 'Thing',
+    'none' => 'Thing'
   );
   public $generic_property_types = array(
     'label'=>'',
@@ -333,7 +334,11 @@ class wdtax_taxonomy {
     $wd = new wdtax_generic_wikidata( $wd_id, $types );
     $wd->store_term_data( $term_id, $this->id ); //update term name and descr
     $wd->set_known_wd_type( $this->type_map );
-    $wd_type = $wd->properties['type'];
+    if (isset ($wd->properties['type']) && ( '' != $wd->properties['type'] ) ) {
+      $wd_type = $wd->properties['type'];
+    } else {
+      $wd_type = 'none';
+    }
     if ( 'Person' === $this->type_map[ $wd_type ] ) {
       $types = $this->person_property_types;
       $where = "wd:{$wd_id} rdfs:label ?label .
