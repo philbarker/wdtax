@@ -431,7 +431,7 @@ class wdtax_taxonomy {
       $tag = 'span';
     }
     if ( isset( $args['class'] ) ) {
-      $class = $args['class'];
+      $class = ' class="'.$args['class'].'" "';
     } else {
       $class = null;
     }
@@ -464,11 +464,20 @@ class wdtax_taxonomy {
         $opentag = '<'.$tag.' href="';
         $closetag = '" />';
       }
+    } elseif ( 'img'===$tag ) {
+        if ( isset( $schema_property ) ) {
+          $schema_property = urlencode( $schema_property );
+          $opentag = "<{$tag} rel=\"{$schema_property}\" src=\"";
+          $closetag = '" />';
+      } else {
+        $opentag = '<'.$tag.' href="';
+        $closetag = '" />';
+      }
     } elseif ( isset( $tag ) ) {
       $closetag = '</'.$tag.'>';
       $opentag = '<'.$tag;
       if ( isset( $class ) ) {
-        $opentag = $opentag.' class='.$class.' ';
+        $opentag = $opentag.$class;
       }
       if ( isset( $schema_property ) ) {
         $opentag = $opentag.' property="'.$schema_property.'" ';
@@ -655,5 +664,17 @@ class wdtax_taxonomy {
     $text = ' located or headquarters in ';
     $country = $this->schema_text( $term_id, 'wd_country' );
     return $descr.$founded.$dissolved.$text.$country;
+  }
+  function schema_image( $term_id ) {
+    $term_meta = get_term_meta( $term_id );
+    if ( isset( $term_meta['wd_image'] ) ) {
+      $args  = array(
+        'tag' => 'img',
+        'class' => 'thumbnail'
+      );
+      return $this->schema_text( $term_id, 'wd_image', $args );
+    } else {
+      return '';
+    }
   }
 }

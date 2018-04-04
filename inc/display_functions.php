@@ -81,7 +81,6 @@ function wdtax_archive_page_header( $term_id ) {
   $term = get_term( $term_id );
   $wdtax_rel = str_replace('wdtax_','',$term->taxonomy);
   $wdtax_taxonomy = $wdtax_taxonomies[$wdtax_rel];
-  //$term_meta = get_term_meta( $term_id );
   $type = get_term_meta( $term_id, 'schema_type', True );
   echo '<h1 class="page-title">Index page for ';
   echo $wdtax_taxonomy->schema_text( $term_id, 'wd_name' );
@@ -120,5 +119,12 @@ function wdtax_archive_section_heading( $term_id, $rel ) {
 		$heading = 'Pages that '.$rel.': ';
 	}
 	echo '<h2>'.$heading.$term->name.'</h2>';
+}
+function wdtax_archive_page_image( $term_id ) {
+  global $wdtax_taxonomies;
+  $term = get_term( $term_id );
+  $wdtax_rel = str_replace('wdtax_','',$term->taxonomy);
+  $wdtax_taxonomy = $wdtax_taxonomies[$wdtax_rel];
+  echo $wdtax_taxonomy->schema_image( $term_id );
 }
 ?>
