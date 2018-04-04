@@ -301,7 +301,7 @@ class wdtax_taxonomy {
     */
     if( isset( $_POST['wd_id'] ) ) {
       $wd_id = ucfirst( esc_attr($_POST['wd_id']) );
-      update_term_meta( $term_id, 'wd_id', $wd_id );
+      update_term_meta( $term_id, 'wd_id', $wd_id);
     }
   }
   function pre_edit_form( $term ) {
@@ -436,7 +436,7 @@ class wdtax_taxonomy {
       $tag = 'span';
     }
     if ( isset( $args['class'] ) ) {
-      $class = ' class="'.$args['class'].'" "';
+      $class = ' class="'.$args['class'].'" ';
     } else {
       $class = null;
     }
@@ -463,19 +463,19 @@ class wdtax_taxonomy {
     } elseif ( ( 'link' === $tag ) || ( 'a'===$tag ) ) {
       if ( isset( $schema_property ) ) {
         $schema_property = urlencode( $schema_property );
-        $opentag = "<{$tag} rel=\"{$schema_property}\" href=\"";
+        $opentag = "<{$tag} {$class} rel=\"{$schema_property}\" href=\"";
         $closetag = '" />';
       } else {
-        $opentag = '<'.$tag.' href="';
+        $opentag = "<{$tag} {$class}  href=\"";
         $closetag = '" />';
       }
     } elseif ( 'img'===$tag ) {
         if ( isset( $schema_property ) ) {
           $schema_property = urlencode( $schema_property );
-          $opentag = "<{$tag} rel=\"{$schema_property}\" src=\"";
+          $opentag = "<{$tag} {$class} rel=\"{$schema_property}\" src=\"";
           $closetag = '" />';
       } else {
-        $opentag = '<'.$tag.' href="';
+        $opentag = "<{$tag} {$class}  href=\"";
         $closetag = '" />';
       }
     } elseif ( isset( $tag ) ) {
@@ -495,7 +495,7 @@ class wdtax_taxonomy {
     if (  isset( $property_value ) ) {
       return $opentag.$before.$property_value.$after.$closetag;
     } else {
-      return '<'.$tag.' class="'.$class.'" >'.$before.'no data'.$after.'</'.$tag.'>';
+      return "<{$tag} class=\"{$class}\">{$before} no data {$after} </{$tag}>";
     }
   }
   function list_all_schema( $term_id ) {
