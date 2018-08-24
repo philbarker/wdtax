@@ -106,7 +106,7 @@ function wdtax_archive_page_header( $term_id ) {
   $wdtax_rel = str_replace('wdtax_','',$term->taxonomy);
   $wdtax_taxonomy = $wdtax_taxonomies[$wdtax_rel];
   $type = get_term_meta( $term_id, 'schema_type', True );
-  echo '<h1 class="page-title">Index page for ';
+  echo '<h1 class="page-title">Index: ';
   echo $wdtax_taxonomy->schema_text( $term_id, 'wd_name' );
   echo '</h1>';
   echo '<div class="taxonomy-description  wdtax-clearfix" > ';
