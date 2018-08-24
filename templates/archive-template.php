@@ -24,6 +24,8 @@ $type = get_term_meta( $term_id, 'schema_type', True );
 		<main id="main" class="site-main" role="main">
 			<header class="page-header">
 				<?php wdtax_archive_page_header( $term_id ); ?>
+				<p>using plugin default template</p>
+
 			</header><!-- .page-header -->
 <?php
 $options_arr = get_option( 'wdtax_options' );

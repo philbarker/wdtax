@@ -8,20 +8,37 @@
  * Author URI: http://people.pjjk.net/phil
  * @license GPL 2.0+
 */
+
+
+
 defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
+
+# by default will use templates/archive-template.php and  templates/style.css.
+# will look for /wdtax/templates in theme folder first, if they do not exist,
+# will use files from this plugin's folder.
 
 function wdtax_custom_taxonomy_template( $archive_template ) {
   global $post;
   global $wdtax_dir;
-  $archive_template = $wdtax_dir.'/templates/wdtax-template.php';
+  $theme_dir = get_stylesheet_directory();
+  if ( file_exists( $theme_dir.'/wdtax/templates/archive-template.php' ) ) {
+    $archive_template = $theme_dir.'/wdtax/templates/archive-template.php';
+  } else {
+    $archive_template = $wdtax_dir.'/templates/archive-template.php';
+  }
   return $archive_template;
 }
 add_filter( 'archive_template', 'wdtax_custom_taxonomy_template' ) ;
 
 function wdtax_add_stylesheet() {
-  $src = plugins_url('../templates/wdtax-style.css', __FILE__ );
-  wp_register_style( 'wdtax_style', $src );
-  wp_enqueue_style( 'wdtax_style' );
+  $theme_dir = get_stylesheet_directory();
+  if ( file_exists( $theme_dir.'/wdtax/templates/style.css' ) ) {
+    $src = get_stylesheet_directory_uri().'/wdtax/templates/style.css';
+  } else {
+    $src = plugins_url('../templates/style.css', __FILE__ );
+  }
+  wp_register_style( 'wdtax_style', $src, null, null, 'screen' );
+  wp_enqueue_style( 'wdtax_style', $src, null, null, 'screen' );
 }
 add_action('wp_enqueue_scripts', 'wdtax_add_stylesheet');
 
