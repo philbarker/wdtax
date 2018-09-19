@@ -60,7 +60,8 @@ function wdtax_admin_notice( $class, $msg ) {
 }
 
 function wdtax_list_terms( $atts ) {
-// creates a shortcode wdtax_terms that requires one parameter custom_taxonomy.
+// creates a shortcode wdtax_terms that requires one parameter custom_taxonomy,
+// and which will list all the terms in that custom taxonomy.
 // To use this shortcode drag and drop a Text widget into your sidebar.
 // Add this shortcode in your Widget and save.
 // [wdtax_terms custom_taxonomy=customtaxonomyname]
@@ -80,7 +81,8 @@ add_filter('widget_text', 'do_shortcode');
 
 function wdtax_post_terms( $atts ) {
 // creates a shortcode wdtax_post_terms that requires one parameter
-// custom_taxonomy.
+// custom_taxonomy, and which will list terms from that custom taxonomy with
+// which the current  post has been tagged.
 // To use this shortcode drag and drop a Text widget into your sidebar.
 // Add this shortcode in your Widget and save.
 // [wdtax_post_terms custom_taxonomy=customtaxonomyname]
@@ -135,13 +137,13 @@ function wdtax_archive_section_heading( $term_id, $rel ) {
   $wdtax_rel = str_replace('wdtax_','',$term->taxonomy);
   $wdtax_taxonomy = $wdtax_taxonomies[$wdtax_rel];
 	if ('about' == $rel) {
-		$heading = 'Pages about ';
+		$heading = 'Articles about ';
 	} elseif ( 'mentions' == $rel ) {
-		$heading = 'Pages that mention ';
+		$heading = 'Articles that mention ';
 	} elseif ( 'citation' == $rel ) {
-		$heading = 'Pages citing ';
+		$heading = 'Articles citing ';
 	} else  {
-		$heading = 'Pages that '.$rel.': ';
+		$heading = 'Articles that '.$rel.': ';
 	}
 	echo '<h2>'.$heading.$term->name.'</h2>';
 }
