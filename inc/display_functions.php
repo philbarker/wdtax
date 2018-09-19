@@ -8,25 +8,24 @@
  * Author URI: http://people.pjjk.net/phil
  * @license GPL 2.0+
 */
-
-
-
 defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
-
 # by default will use templates/archive-template.php and  templates/style.css.
 # will look for /wdtax/templates in theme folder first, if they do not exist,
 # will use files from this plugin's folder.
-
 function wdtax_custom_taxonomy_template( $archive_template ) {
   global $post;
   global $wdtax_dir;
   $theme_dir = get_stylesheet_directory();
-  if ( file_exists( $theme_dir.'/wdtax/templates/archive-template.php' ) ) {
-    $archive_template = $theme_dir.'/wdtax/templates/archive-template.php';
+  if ( is_tax() ) {
+    if ( file_exists( $theme_dir.'/wdtax/templates/archive-template.php' ) ) {
+      $archive_template = $theme_dir.'/wdtax/templates/archive-template.php';
+    } else {
+      $archive_template = $wdtax_dir.'/templates/archive-template.php';
+    }
+    return $archive_template;
   } else {
-    $archive_template = $wdtax_dir.'/templates/archive-template.php';
+    return;
   }
-  return $archive_template;
 }
 add_filter( 'archive_template', 'wdtax_custom_taxonomy_template' ) ;
 
