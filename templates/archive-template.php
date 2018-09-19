@@ -63,7 +63,7 @@ if ( isset( $options_arr['rels'] ) ) {
 				</header><!-- .entry-header -->
 				<?php the_excerpt(); ?>
 				<link property="<?php echo $rel ?>"
-				      href="<?php echo home_url( $wp->request ).'#id'; ?>" />
+				      href="<?php $entity_url; ?>" />
 			</article><!-- #post-## -->
 		<?php
 		endwhile; //a loop
