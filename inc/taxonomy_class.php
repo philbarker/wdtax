@@ -156,7 +156,7 @@ class wdtax_taxonomy {
     */
     if ( empty( $s_name ) ) $s_name = $taxonomy;
    	if ( empty( $p_name ) )	$p_name = $taxonomy.'s';
-    $slug = str_replace(' ','-',strtolower($p_name));
+    $slug = str_replace(' ','-',strtolower($s_name));
     $p_name = ucwords($p_name);
     $s_name = ucwords($s_name);
     $this->id = $taxonomy;
@@ -217,6 +217,7 @@ class wdtax_taxonomy {
   function register_wdtaxonomy() {
     /*registers the taxonomy*/
     register_taxonomy( $this->id, $this->type, $this->args );
+    flush_rewrite_rules(); //make sure we have updated permalinks
   }
   function add_form_fields( ) {
     /*fields for the 'add' form*/
