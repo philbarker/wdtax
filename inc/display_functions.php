@@ -9,10 +9,11 @@
  * @license GPL 2.0+
 */
 defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
-# by default will use templates/archive-template.php and  templates/style.css.
-# will look for /wdtax/templates in theme folder first, if they do not exist,
-# will use files from this plugin's folder.
 function wdtax_custom_taxonomy_template( $archive_template ) {
+  # set new template for archives of custom taxonomies.
+  # by default will use templates/archive-template.php and  templates/style.css.
+  # will look for /wdtax/templates in theme folder first, if they do not exist,
+  # will use files from this plugin's folder.
   global $post;
   global $wdtax_dir;
   $theme_dir = get_stylesheet_directory();
@@ -24,7 +25,7 @@ function wdtax_custom_taxonomy_template( $archive_template ) {
     }
     return $archive_template;
   } else {
-    return;
+    return; // do nothing if not taxonomy archive
   }
 }
 add_filter( 'archive_template', 'wdtax_custom_taxonomy_template' ) ;

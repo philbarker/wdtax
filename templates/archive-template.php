@@ -15,11 +15,15 @@ defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
 get_header();
 global $wp;
 $term_id = get_queried_object_id();
+$term = get_term( $term_id );
 $type = get_term_meta( $term_id, 'schema_type', True );
+$base_url = get_site_url();
+$term_slug = $term->slug;
+$entity_url = $base_url.'/entities/'.$term_slug
 ?>
 	<div id="primary" class="content-area"
 	     vocab="http://schema.org/"
-			 resource="<?php echo home_url( $wp->request ).'#id'; ?>"
+			 resource="<?php echo $entity_url; ?>"
 			 typeof ="<?php echo  $type ?>" >
 		<main id="main" class="site-main" role="main">
 			<header class="page-header">
