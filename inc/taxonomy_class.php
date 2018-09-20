@@ -1,7 +1,7 @@
 <?php
 /*
  * Package Name: wdtax
- * Description: class and mehtods for custom taxonomies & their metadata
+ * Description: class and methods for custom taxonomies & their metadata
  * Version: 0
  * Author: Phil Barker
  * Author URI: http://people.pjjk.net/phil
@@ -18,22 +18,42 @@ class wdtax_taxonomy {
   * After instatiating, the init  method should be called to
   * hook various functions to init and admin_init.
   *
-  * methods
-  * init() : hooks into various init actions
+  properties
+  * $id : id of the taxonomy
+  * $type : types of post to which taxonomy applies
+  * $args : argument array of taxonomy
+  * $property_map: map from keys used for storing data to key in $taxonomy,
+                   human label, and schema.org id
+  * $type_map : map from wikidata classes to schema.org types
+  * $<sdotype>_property_types, <sdotype> = generic, person, organization, book,
+                                           creative_work, place, event
+              : array of properties for each schema.org type.
+
+  methods
+  * __construct($taxonomy, $type, $s_name='', $p_name='')
+  *           $taxonomy = id of taxonomy, $type = types of post to attach it to
+              $s_name & $p_name = singluar and plural names, used for labels
+                                  and in description.
+  *           $s_name and $p_name will default to $taxonomy and $taxonomy.'s'
+           : sets up a taxonomy, essentially created the args() array used to
+             register the taxonomy. Must call init to register it.
+  * init() : registers the taxonomy & hooks into various init actions to set up
+             forms for editing taxonomy terms.
+             Must be called after __construct()
   * register_wdtaxonomy() : registers the taxonomy (called by init)
-  * add_form_fields() : fields for add new term form (called by admin_init)
-  * edit_form_fields( $wd_term ) : fields for edit term form (called by
-  *     admin_init)
-  * save_meta() : saves term metadata (called by admin_init)
-  * fetch_store_wikidata( $term ) : gets and stores wikidata for
-  *           $term in the taxonomy
+  * add_form_fields() : fields for add new term form (hooked to admin_init)
+  * edit_form_fields( $wd_term ) : fields for edit term form (hooked to
+        admin_init)
+  * save_meta() : saves term metadata (hooked to by admin_init)
+  * fetch_store_wikidata( $term ) : gets and stores data from wikidata for
+              $term in the taxonomy
   */
   protected $id;     //id of the taxonomy
   protected $type;   //types of post to which taxonomy apllies
   protected $args;   //argument array of taxonomy
-  //next: keys used for storing wikidata properties as term metadata mapped
-  //to key in $taxonomy->properties array, human label, schema id
   public $property_map = array(
+    //keys used for storing wikidata properties as term metadata mapped
+    //to key in $taxonomy->properties array, human label, schema id
     'wd_id' => ['id', 'Wikidata ID', 'sameAs'],
     'wd_description' => ['description', 'Description', 'description'],
     'wd_name' => ['label', 'Name', 'name'],
@@ -190,7 +210,9 @@ class wdtax_taxonomy {
 	  );
   }
   function init() {
-    /*hooks into various init action*/
+    /* Registers the taxonomy and hooks into various init actions to
+     * create forms associated with editing taxonomy terms.
+     */
     //first, register the taxonomy on init
     add_action( 'init', array( $this, 'register_wdtaxonomy') );
     //add fields to add term form
@@ -328,6 +350,8 @@ class wdtax_taxonomy {
   function fetch_store_wikidata( $wd_id, $term_id ) {
    // will fetch wikidata for $wd_id, which should be wikidata identifier (Q#)
    // and will store relevant data as proerties/metadata for taxonomy term
+   // First get generic wikidata, which includes wikidata class type, then use
+   // this info to get more specific data for that typy
    //
     $p_map = $this->property_map;
     $types = $this->generic_property_types;
