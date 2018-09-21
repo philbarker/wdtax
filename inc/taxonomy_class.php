@@ -12,22 +12,23 @@ defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
 
 class wdtax_taxonomy {
  /* class for creating custom taxonomies with admin menus that can take
-  * data from wikidata and can be used to provide linked data with schema.org
-  * properties such as schema:about, scheam:mentions...
+    data from wikidata and can be used to provide linked data with schema.org
+    properties such as schema:about, scheam:mentions...
   *
   * After instatiating, the init  method should be called to
-  * hook various functions to init and admin_init.
+    hook various functions to init and admin_init.
   *
   properties
   * $id : id of the taxonomy
   * $type : types of post to which taxonomy applies
   * $args : argument array of taxonomy
-  * $property_map: map from keys used for storing data to key in $taxonomy,
-                   human label, and schema.org id
+  * $property_map: map $taxonomy metadata property names to
+                   keys in wdtax_wikidata->properties array, human labels,
+                   and schema.org property names.
   * $type_map : map from wikidata classes to schema.org types
   * $<sdotype>_property_types, <sdotype> = generic, person, organization, book,
                                            creative_work, place, event
-              : array of properties for each schema.org type.
+              : array of known properties for each schema.org type.
 
   methods
   * __construct($taxonomy, $type, $s_name='', $p_name='')
@@ -47,13 +48,48 @@ class wdtax_taxonomy {
   * save_meta() : saves term metadata (hooked to by admin_init)
   * fetch_store_wikidata( $term ) : gets and stores data from wikidata for
               $term in the taxonomy
+  * schema_text( $term_id, $p, $args=array() )
+          : echo property $p of a term as schema markup for property to which
+            $p maps in $property_map, in html tag $args['tag'] or span as
+            default, with text $args['before'|'after'] before or after $p.
+            $args['class'] can be used for @class of html element
+  * list_all_schema( $term_id )
+          : lists all metadata for term mapped against schema properties using
+            $property_map
+  * schema_birth_details ( $term_id ) return birth date & place with schema.org
+            markup
+  * schema_death_details ( $term_id ) return death date & place  with schema.org
+            markup
+  * schema_person_details ( $term_id ) return description, birth and death
+            details with schema.org markup
+  * schema_sameas_wd ( $term_id ),
+  * schema_sameas_viaf ( $term_id ),
+  * schema_sameas_isni ( $term_id ),
+  * schema_sameas_geoname ( $term_id ) : return relevant identifier marked up
+            as schema.org sameAs, returns empty string if that id does not exist
+  * schema_sameas_all ( $term_id ) : return string of all external identifiers
+            marked up as schema.org sameAs.
+  * schema_author ( $term_id ) : return 'by <wd_author>' if taxon has property
+             <wd_author>, else returns empty string.
+  * schema_creator ( $term_id ) : return 'by <wd_creator>' if taxon has property
+             <wd_creator>, else returns empty string.
+  * schema_country( $term_id )
+  * schema_publication_date( $term_id )
+  * schema_book_details( $term_id )
+  * schema_creativework_details( $term_id )
+  * schema_place_details( $term_id )
+  * schema_event_details( $term_id )
+  * schema_organization_details( $term_id )
+  * schema_image( $term_id )
+  * schema_thumbnail( $term_id )
   */
   protected $id;     //id of the taxonomy
   protected $type;   //types of post to which taxonomy apllies
   protected $args;   //argument array of taxonomy
   public $property_map = array(
-    //keys used for storing wikidata properties as term metadata mapped
-    //to key in $taxonomy->properties array, human label, schema id
+    //taxonomy term metadata names mapped to key in $taxonomy->properties array,
+    // human label, schema property names
+    // note: wdtax_ would be better prefix than wd_
     'wd_id' => ['id', 'Wikidata ID', 'sameAs'],
     'wd_description' => ['description', 'Description', 'description'],
     'wd_name' => ['label', 'Name', 'name'],
@@ -348,11 +384,11 @@ class wdtax_taxonomy {
     return;
   }
   function fetch_store_wikidata( $wd_id, $term_id ) {
-   // will fetch wikidata for $wd_id, which should be wikidata identifier (Q#)
-   // and will store relevant data as proerties/metadata for taxonomy term
-   // First get generic wikidata, which includes wikidata class type, then use
-   // this info to get more specific data for that typy
-   //
+  // will fetch wikidata for $wd_id, which should be wikidata identifier (Q#)
+  // and will store relevant data as proerties/metadata for taxonomy term
+  // First get generic wikidata, which includes wikidata class type, then use
+  // this info to get more specific data for that typy
+  //
     $p_map = $this->property_map;
     $types = $this->generic_property_types;
     $this->delete_term_metadata( $term_id );
@@ -381,19 +417,19 @@ class wdtax_taxonomy {
       $wd = new wdtax_wikidata( $wd_id, $types, $where );
       update_term_meta( $term_id, 'schema_type',  'Person' );
     } elseif (  'Organization' === $this->type_map[ $wd_type ] ) {
-        $types = $this->organization_property_types;
-        $where = "wd:{$wd_id} rdfs:label ?label .
-                  wd:{$wd_id} schema:description ?description .
-                  OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
-                  OPTIONAL { wd:{$wd_id} wdt:P571 ?inception }
-                  OPTIONAL { wd:{$wd_id} wdt:P576 ?dissolution }
-                  OPTIONAL { wd:{$wd_id} wdt:P17 ?country }
-                  OPTIONAL { wd:{$wd_id} wdt:P159 ?place .
-                             ?place wdt:P17 ?country }
-                  OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }
-                  OPTIONAL { wd:{$wd_id} wdt:P213 ?isni }";
-        $wd = new wdtax_wikidata( $wd_id, $types, $where );
-        update_term_meta( $term_id, 'schema_type',  'Organization' );
+      $types = $this->organization_property_types;
+      $where = "wd:{$wd_id} rdfs:label ?label .
+                wd:{$wd_id} schema:description ?description .
+                OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
+                OPTIONAL { wd:{$wd_id} wdt:P571 ?inception }
+                OPTIONAL { wd:{$wd_id} wdt:P576 ?dissolution }
+                OPTIONAL { wd:{$wd_id} wdt:P17 ?country }
+                OPTIONAL { wd:{$wd_id} wdt:P159 ?place .
+                           ?place wdt:P17 ?country }
+                OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }
+                OPTIONAL { wd:{$wd_id} wdt:P213 ?isni }";
+      $wd = new wdtax_wikidata( $wd_id, $types, $where );
+      update_term_meta( $term_id, 'schema_type',  'Organization' );
     } elseif ( 'Book' === $this->type_map[ $wd_type ] ) {
       $types = $this->book_property_types;
       $where = "wd:{$wd_id} rdfs:label ?label .
