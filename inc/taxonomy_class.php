@@ -691,12 +691,24 @@ class wdtax_taxonomy {
       return '';
     }
   }
+  function schema_sameas_other_id( $term_id ) {
+    $term_meta = get_term_meta( $term_id );
+    if ( isset( $term_meta['wd_other_id'] ) ) {
+      $args = array(
+        'tag'=>'link',
+      );
+      return $this->schema_text( $term_id, 'wd_other_id', $args );
+    } else {
+      return '';
+    }
+  }
   function schema_sameas_all( $term_id ) {
     $wd = $this->schema_sameas_wd( $term_id );
     $isni = $this->schema_sameas_isni( $term_id );
     $viaf = $this->schema_sameas_viaf( $term_id );
     $geoname = $this->schema_sameas_geoname( $term_id );
-    return $wd.$isni.$viaf.$geoname;
+    $other_id = $this->schema_sameas_other_id( $term_id );
+    return $wd.$isni.$viaf.$geoname.$other_id;
   }
   function schema_author( $term_id ) {
     $term_meta = get_term_meta( $term_id );
