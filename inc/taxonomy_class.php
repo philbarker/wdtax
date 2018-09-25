@@ -87,8 +87,8 @@ class wdtax_taxonomy {
   protected $type;   //types of post to which taxonomy apllies
   protected $args;   //argument array of taxonomy
   public $property_map = array(
-    //taxonomy term metadata names mapped to key in $taxonomy->properties array,
-    // human label, schema property names
+    // taxonomy term metadata name mapped to
+    // key in wdtax_wikidata->properties array, human label, schema property
     // note: wdtax_ would be better prefix than wd_
     'wd_id' => ['id', 'Wikidata ID', 'sameAs'],
     'wd_description' => ['description', 'Description', 'description'],
@@ -112,7 +112,8 @@ class wdtax_taxonomy {
     'wd_place_country'=> ['p_country', 'In country', 'containedInPlace'],
     'wd_inception'=> ['inception', 'Founded', 'foundingDate'],
     'wd_dissolution'=> ['dissolution', 'Dissolution', 'dissolutionDate'],
-    'wd_geoname' => ['geoname', 'GeoNames ID', 'sameAs']
+    'wd_geoname' => ['geoname', 'GeoNames ID', 'sameAs'],
+    'wd_other_id' => ['', 'Other ID', 'sameAs']
   );
   // $type map maps wikidata class labels to schema Types, most specific first
   public $type_map = array(
@@ -284,6 +285,10 @@ class wdtax_taxonomy {
           <label for="wd_id"><?php _e( 'Wikidata ID', 'wdtax' ); ?></label>
           <input type="text" id="wd_id" name="wd_id" />
       </div>
+      <div class="form-field term-group">
+          <label for="wd_other_id"><?php _e( 'Other ID', 'wdtax' ); ?></label>
+          <input type="text" id="wd_other_id" name="wd_other_id" />
+      </div>
       <?php
   }
   function edit_form_fields( $term, $taxonomy ) {
@@ -294,7 +299,8 @@ class wdtax_taxonomy {
     $wd_id = ucfirst( get_term_meta( $term_id, 'wd_id', true ) );
     $wd_name = get_term_meta( $term_id, 'wd_name', true );
     $wd_description = get_term_meta( $term_id, 'wd_description', true );
-    $term_meta = get_term_meta( $term->term_id );
+    $term_meta = get_term_meta( $term_id );
+    $wd_other_id = $term_meta['wd_other_id'][0];
     ?>
     <tr class="form-field term-group-wrap">
         <th scope="row">
@@ -307,15 +313,30 @@ class wdtax_taxonomy {
     </tr>
     <tr class="form-field term-group-wrap">
         <th scope="row">
+            <label for="wd_other_id"><?php _e( 'Other ID', 'wdtax' ); ?></label>
+        </th>
+        <td>
+            <input type="text" id="wd_other_id"  name="wd_other_id"
+            	   value="<?php echo( esc_url( $wd_other_id ) ); ?>" />
+        </td>
+    </tr>
+    <tr class="form-field term-group-wrap">
+        <th scope="row">
             Wikidata:
         </th>
         <td>
           <?php
-          foreach ( array_keys( $term_meta ) as $key ) {
-            print_r( '<b>'.$key.': </b>');
-            print_r($term_meta[$key][0]);
-            print_r( '<br />' );
-            unset( $key );
+          // print any term_meta that is set and for which the key maps to
+          // a wikidata property
+          foreach ( array_keys( $this->property_map ) as $key ) {
+            if ( ( '' !== $this->property_map[$key][0] )
+                   && isset($term_meta[$key][0] )
+              ) {
+              print_r( '<b>'.$key.': </b>');
+              print_r($term_meta[$key][0]);
+              print_r( '<br />' );
+              unset( $key );
+            }
           }
            ?>
         </td>
@@ -342,22 +363,29 @@ class wdtax_taxonomy {
      * & store as term metadata
      * hooked in to {$taxonomy}_create_term
      */
+     if( isset( $_POST['wd_other_id'] ) ) {
+       $wd_other_id = esc_url( $_POST['wd_other_id'] );
+       add_term_meta( $term_id, 'wd_other_id', $wd_other_id);
+     }
     if( isset( $_POST['wd_id'] ) ) {
       $wd_id = ucfirst( esc_attr( $_POST['wd_id'] ) );
       $this->fetch_store_wikidata( $wd_id, $term_id );
     }
   }
   function on_edit_term( $term_id ) {
-   /*Hooked into edit term for this taxonomy.
-    *Don't save metadata that comes from wikidata when term is editted
-    *It is fetched and saved on pre-loading the term edit form, and then
-    *edit form is reloaded on update.
-    *If you do save metadata from wikidata here, it will call the edit term
-    *events, including this method. Which would then call the edit term
-    *events, including this method. Which would then call the edit term
-    *events, including this method. Which would then call the edit term
-    *events, including this method. Which would then call the edit term
+   /* Hooked into edit term for this taxonomy.
+    * Don't save term data that comes from wikidata when term is editted
+    * It is fetched and saved on pre-loading the term edit form, and then
+    * edit form is reloaded on update.
+    * If you do save term data here,  it will call the edit term events,
+    * including this method. Which would then call the edit term events,
+    * including this method. Which would then call the edit term events,
+    * including this method. Which would then call the edit term events,
     */
+    if( isset( $_POST['wd_other_id'] ) ) {
+      $wd_other_id = esc_url( $_POST['wd_other_id'] );
+      update_term_meta( $term_id, 'wd_other_id', $wd_other_id);
+    }
     if( isset( $_POST['wd_id'] ) ) {
       $wd_id = ucfirst( esc_attr($_POST['wd_id']) );
       update_term_meta( $term_id, 'wd_id', $wd_id);
@@ -376,10 +404,14 @@ class wdtax_taxonomy {
       $this->fetch_store_wikidata( $wd_id, $term_id );
     }
   }
-  function delete_term_metadata( $term_id ) {
-    foreach ( array_keys( get_term_meta( $term_id ) ) as $key ) {
-      delete_term_meta( $term_id, $key );
-      unset( $key );
+  function delete_term_wikidata( $term_id ) {
+  // delete the term metadata for each of the keys in property_map if there
+  // is a wikidata property mapped to it
+    foreach ( array_keys( $this->property_map ) as $key ) {
+      if ( '' !== $this->property_map[$key][0] ) {
+        delete_term_meta( $term_id, $key );
+        unset( $key );
+      }
     }
     return;
   }
@@ -391,7 +423,7 @@ class wdtax_taxonomy {
   //
     $p_map = $this->property_map;
     $types = $this->generic_property_types;
-    $this->delete_term_metadata( $term_id );
+    $this->delete_term_wikidata( $term_id );
     $wd = new wdtax_generic_wikidata( $wd_id, $types );
     $wd->store_term_data( $term_id, $this->id ); //update term name and descr
     $wd->set_known_wd_type( $this->type_map );
