@@ -113,7 +113,8 @@ class wdtax_taxonomy {
     'wd_inception'=> ['inception', 'Founded', 'foundingDate'],
     'wd_dissolution'=> ['dissolution', 'Dissolution', 'dissolutionDate'],
     'wd_geoname' => ['geoname', 'GeoNames ID', 'sameAs'],
-    'wd_other_id' => ['', 'Other ID', 'sameAs']
+    'wd_other_id' => ['', 'Other ID (URL)', 'sameAs'],
+    'schema_type' => ['', 'schema.org type', '@typeOf']
   );
   // $type map maps wikidata class labels to schema Types, most specific first
   public $type_map = array(
@@ -286,8 +287,23 @@ class wdtax_taxonomy {
           <input type="text" id="wd_id" name="wd_id" />
       </div>
       <div class="form-field term-group">
-          <label for="wd_other_id"><?php _e( 'Other ID', 'wdtax' ); ?></label>
+          <label for="wd_other_id"><?php _e( 'Other ID (URL)', 'wdtax' ); ?>
+          </label>
           <input type="text" id="wd_other_id" name="wd_other_id" />
+      </div>
+      <div class="form-field term-group">
+          <label for="schema_type"><?php _e( 'Schema.org Type', 'wdtax' ); ?>
+          </label>
+          <select id="schema_type" name="schema_type" >
+            <?php
+            foreach ( array_unique( array_values( $this->type_map ) ) as $type ) {
+              $selected = selected( $type, 'Thing', false);
+              echo "<option value={$type} {$selected}>{$type}</option>";
+            }
+            ?>
+          </select>
+          <p>This may be overridden by a value inferred from wikidata.<br />
+             Only listed schema.org types can be handled.</p>
       </div>
       <?php
   }
@@ -299,8 +315,9 @@ class wdtax_taxonomy {
     $wd_id = ucfirst( get_term_meta( $term_id, 'wd_id', true ) );
     $wd_name = get_term_meta( $term_id, 'wd_name', true );
     $wd_description = get_term_meta( $term_id, 'wd_description', true );
+    $wd_other_id = get_term_meta( $term_id, 'wd_other_id', true );
+    $schema_type = get_term_meta( $term_id, 'schema_type', true );
     $term_meta = get_term_meta( $term_id );
-    $wd_other_id = $term_meta['wd_other_id'][0];
     ?>
     <tr class="form-field term-group-wrap">
         <th scope="row">
@@ -308,17 +325,41 @@ class wdtax_taxonomy {
         </th>
         <td>
             <input type="text" id="wd_id"  name="wd_id"
-            	   value="<?php echo ucfirst($wd_id); ?>" />
+            	   value="<?php echo $wd_id; ?>" />
         </td>
     </tr>
     <tr class="form-field term-group-wrap">
         <th scope="row">
-            <label for="wd_other_id"><?php _e( 'Other ID', 'wdtax' ); ?></label>
+            <label for="wd_other_id"><?php _e( 'Other ID (URL)', 'wdtax' ); ?>
+            </label>
         </th>
         <td>
             <input type="text" id="wd_other_id"  name="wd_other_id"
             	   value="<?php echo( esc_url( $wd_other_id ) ); ?>" />
         </td>
+    </tr>
+    <div class="form-field term-group">
+    </div>
+
+    <tr class="form-field term-group-wrap">
+      <th scope="row">
+        <label for="schema_type"><?php _e( 'Schema.org Type', 'wdtax' ); ?>
+        </label>
+      </th>
+      <td>
+        <select id="schema_type" name="schema_type" >
+          <?php
+          foreach ( array_unique( array_values( $this->type_map ) ) as $type ) {
+            $selected = selected( $type, $schema_type, false);
+            echo "<option value={$type} {$selected}>{$type}</option>";
+          }
+          ?>
+        </select>
+        <p class="description">
+          This may be overridden by a value inferred from wikidata.<br />
+          Only listed schema.org types can be handled.
+        </p>
+      </td>
     </tr>
     <tr class="form-field term-group-wrap">
         <th scope="row">
@@ -367,6 +408,10 @@ class wdtax_taxonomy {
        $wd_other_id = esc_url( $_POST['wd_other_id'] );
        add_term_meta( $term_id, 'wd_other_id', $wd_other_id);
      }
+     if( isset( $_POST['schema_type'] ) ) {
+       $schema_type = esc_attr( $_POST['schema_type'] );
+       add_term_meta( $term_id, 'schema_type', $schema_type);
+     }
     if( isset( $_POST['wd_id'] ) ) {
       $wd_id = ucfirst( esc_attr( $_POST['wd_id'] ) );
       $this->fetch_store_wikidata( $wd_id, $term_id );
@@ -390,7 +435,10 @@ class wdtax_taxonomy {
       $wd_id = ucfirst( esc_attr($_POST['wd_id']) );
       update_term_meta( $term_id, 'wd_id', $wd_id);
     }
-  }
+    if( isset( $_POST['schema_type'] ) ) {
+      $schema_type = ucfirst( esc_attr($_POST['schema_type']) );
+      update_term_meta( $term_id, 'schema_type', $schema_type);
+    }  }
   function pre_edit_form( $term ) {
    /* If term has wd_id property will fetch metadata from wikidata
     * & store as term metadata, (which is displayed in edit form)
@@ -400,7 +448,7 @@ class wdtax_taxonomy {
   	$term_id = $term->term_id;
     $wd_id = ucfirst( get_term_meta( $term_id, 'wd_id', true ) );
    	$args = array();
-    if( isset( $wd_id ) ) {
+    if( isset( $wd_id ) && ( '' !== $wd_id ) ) {
       $this->fetch_store_wikidata( $wd_id, $term_id );
     }
   }
@@ -421,6 +469,9 @@ class wdtax_taxonomy {
   // First get generic wikidata, which includes wikidata class type, then use
   // this info to get more specific data for that typy
   //
+    if ( ( '' == $wd_id ) || ('Q' !== $wd_id[0] ) ) {
+      return;  // Do nothing if $wd_id is not a wikidata term id
+    }
     $p_map = $this->property_map;
     $types = $this->generic_property_types;
     $this->delete_term_wikidata( $term_id );
