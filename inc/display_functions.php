@@ -109,7 +109,7 @@ function wdtax_archive_page_header( $term_id ) {
   $wdtax_taxonomy = $wdtax_taxonomies[$wdtax_rel];
   $type = get_term_meta( $term_id, 'schema_type', True );
   echo '<h1 class="page-title">Index: ';
-  echo $wdtax_taxonomy->schema_text( $term_id, 'wd_name' );
+  echo $wdtax_taxonomy->schema_text( $term_id, 'name' );
   echo '</h1>';
   echo '<div class="taxonomy-description  wdtax-clearfix" > ';
   wdtax_archive_page_image( $term_id );
@@ -126,7 +126,7 @@ function wdtax_archive_page_header( $term_id ) {
   } elseif ('Event' === $type ) {
    echo $wdtax_taxonomy->schema_event_details( $term_id );
   } else {
-   echo $wdtax_taxonomy->schema_text($term_id, 'wd_description');
+   echo $wdtax_taxonomy->schema_text($term_id, 'description');
   }
   echo '</div>';
   echo $wdtax_taxonomy->schema_sameas_all( $term_id );

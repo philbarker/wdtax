@@ -597,8 +597,18 @@ class wdtax_taxonomy {
     } else {
       $after = '';
     }
-    $property_value = get_term_meta( $term_id, $p, true );
-    $schema_property = $this->property_map[$p][2];
+    if ( 'name' === $p ) {
+      $term = get_term( $term_id );
+      $property_value = $term->name;
+      $schema_property = 'name';
+    } elseif ( 'description' === $p ) {
+      $term = get_term( $term_id );
+      $property_value = $term->description;
+      $schema_property = 'description';
+    } else {
+      $property_value = get_term_meta( $term_id, $p, true );
+      $schema_property = $this->property_map[$p][2];
+    }
     if ( 'meta' == $tag ) {
       if (  isset( $schema_property ) ) {
         $opentag = "<meta property=\"{$schema_property}\" content=\"";
@@ -688,7 +698,7 @@ class wdtax_taxonomy {
   }
   function schema_person_details ( $term_id ) {
     $args = array('after'=>'. ');
-    $descr = $this->schema_text( $term_id, 'wd_description', $args);
+    $descr = $this->schema_text( $term_id, 'description', $args);
     $birth =  $this->schema_birth_details( $term_id );
     $death = $this->schema_death_details( $term_id );
     return $descr.$birth.$death;
@@ -797,37 +807,58 @@ class wdtax_taxonomy {
     }
   }
   function schema_book_details( $term_id ) {
-    $auth = $this->schema_author( $term_id );
-    $publ = $this->schema_publication_date( $term_id );
-    return 'Book '.$auth.$publ.'. ';
+    if ( isset( get_term_meta($term_id)->wd_id ) )  {
+      $auth = $this->schema_author( $term_id );
+      $publ = $this->schema_publication_date( $term_id );
+      return 'Book '.$auth.$publ.'. ';
+    } else {
+      return $this->schema_text( $term_id, 'description' );
+    }
   }
   function schema_creativework_details( $term_id ) {
-    $type = ' A '.get_term_meta( $term_id, 'wd_type', True );
-    $creator = $this->schema_creator( $term_id );
-    return $type.$creator;
+    if ( isset( get_term_meta($term_id)->wd_id ) )  {
+      $type = ' A '.get_term_meta( $term_id, 'wd_type', True );
+      $creator = $this->schema_creator( $term_id );
+      return $type.$creator;
+    } else {
+      return $this->schema_text( $term_id, 'description' );
+    }
   }
   function schema_place_details( $term_id ) {
-    $descr = $this->schema_text( $term_id, 'wd_description' );
-    $type = ' A '.get_term_meta( $term_id, 'wd_type', True );
-    $country = $this->schema_country( $term_id );
+    $descr = $this->schema_text( $term_id, 'description' );
+    if ( isset( get_term_meta($term_id)->wd_id ) )  {
+      $type = ' A '.get_term_meta( $term_id, 'wd_type', True );
+      $country = $this->schema_country( $term_id );
+    } else {
+      $type = '';
+      $country = '';
+    }
     return $descr.'.'.$type.$country;
   }
   function schema_event_details( $term_id ) {
-    $type = ' A '.get_term_meta( $term_id, 'wd_type', True );
-    $date = ' which happened in '.$this->schema_text( $term_id, 'wd_date' );
-    $place = ' at '.$this->schema_text( $term_id, 'wd_place' );
-    $country = $this->schema_text( $term_id, 'wd_country' );
-    return $type.$date.$place.''.$country;
+    if ( isset( get_term_meta($term_id)->wd_id ) )  {
+      $type = ' A '.get_term_meta( $term_id, 'wd_type', True );
+      $date = ' which happened in '.$this->schema_text( $term_id, 'wd_date' );
+      $place = ' at '.$this->schema_text( $term_id, 'wd_place' );
+      $country = $this->schema_text( $term_id, 'wd_country' );
+      return $type.$date.$place.''.$country;
+    } else {
+      return $this->schema_text( $term_id, 'description' );
+    }
   }
   function schema_organization_details( $term_id ) {
-    $descr = $this->schema_text( $term_id, 'wd_description' );
-    $country = 'Location or headquarters'.
-                $this->schema_text( $term_id, 'wd_country' );
-    $founded = ' founded '.$this->schema_text( $term_id, 'wd_inception' );
-    $dissolved = ' dissolved '.$this->schema_text( $term_id, 'wd_dissolution' );
-    $text = ' located or headquarters in ';
-    $country = $this->schema_text( $term_id, 'wd_country' );
-    return $descr.$founded.$dissolved.$text.$country;
+    $descr = $this->schema_text( $term_id, 'description' );
+    if ( isset( get_term_meta($term_id)->wd_id ) )  {
+      $country = 'Location or headquarters'.
+                  $this->schema_text( $term_id, 'wd_country' );
+      $founded = ' founded '.$this->schema_text( $term_id, 'wd_inception' );
+      $dissolved = ' dissolved '.$this->schema_text( $term_id, 'wd_dissolution' );
+      $text = ' located or headquarters in ';
+      $country = $this->schema_text( $term_id, 'wd_country' );
+      return $descr.$founded.$dissolved.$text.$country;
+    } else {
+      return $descr;
+    }
   }
   function schema_image( $term_id ) {
     $term_meta = get_term_meta( $term_id );
@@ -845,8 +876,6 @@ class wdtax_taxonomy {
     $term_meta = get_term_meta( $term_id );
     if ( isset( $term_meta['wd_image'] ) ) {
       $wd_image = $term_meta['wd_image'];
-
     }
-
   }
 }
