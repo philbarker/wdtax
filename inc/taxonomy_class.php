@@ -325,7 +325,7 @@ class wdtax_taxonomy {
         </th>
         <td>
             <input type="text" id="wd_id"  name="wd_id"
-            	   value="<?php echo $wd_id; ?>" />
+            	   value="<?php echo( $wd_id ); ?>" />
         </td>
     </tr>
     <tr class="form-field term-group-wrap">
@@ -427,18 +427,21 @@ class wdtax_taxonomy {
     * including this method. Which would then call the edit term events,
     * including this method. Which would then call the edit term events,
     */
-    if( isset( $_POST['wd_other_id'] ) ) {
+    if( isset( $_POST['wd_other_id'] ) && ( '' != $_POST['wd_other_id'] ) ) {
       $wd_other_id = esc_url( $_POST['wd_other_id'] );
       update_term_meta( $term_id, 'wd_other_id', $wd_other_id);
     }
-    if( isset( $_POST['wd_id'] ) ) {
+    if( isset( $_POST['wd_id'] ) && ( '' != $_POST['wd_id'] ) ) {
       $wd_id = ucfirst( esc_attr($_POST['wd_id']) );
       update_term_meta( $term_id, 'wd_id', $wd_id);
+    } else {
+      $this->delete_term_wikidata( $term_id );
     }
-    if( isset( $_POST['schema_type'] ) ) {
+    if( isset( $_POST['schema_type'] )  && ( '' != $_POST['schema_type'] ) ) {
       $schema_type = ucfirst( esc_attr($_POST['schema_type']) );
       update_term_meta( $term_id, 'schema_type', $schema_type);
-    }  }
+    }
+  }
   function pre_edit_form( $term ) {
    /* If term has wd_id property will fetch metadata from wikidata
     * & store as term metadata, (which is displayed in edit form)
