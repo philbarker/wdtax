@@ -83,9 +83,9 @@ class wdtax_taxonomy {
   * schema_image( $term_id )
   * schema_thumbnail( $term_id )
   */
-  protected $id;     //id of the taxonomy
-  protected $type;   //types of post to which taxonomy apllies
-  protected $args;   //argument array of taxonomy
+  public $id;     //id of the taxonomy
+  public $type;   //types of post to which taxonomy apllies
+  public $args;   //argument array of taxonomy
   public $property_map = array(
     // taxonomy term metadata name mapped to
     // key in wdtax_wikidata->properties array, human label, schema property
