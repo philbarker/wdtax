@@ -190,6 +190,9 @@ function echo_wdtax_options_html() {
   // output setting sections and their fields
   do_settings_sections( 'wdtax' );
   echo '</form>';
+  echo '<a href="'.admin_url().'options-permalink.php">Permalink Settings</a>';
+  echo '<p>If links aren\'t working after changing taxonomy settings,
+          sometimes it helps to resave the permalink settings</p>';
   echo '</div>';
 }
 
