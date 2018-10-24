@@ -1,6 +1,6 @@
 <?php
 /**
- * A template displaying archive pages for the about taxonomy
+ * A template displaying archive pages for the a taxonomy
  *
  * Used to display the about taxonomy if the theme does not provide a
  * does not provide a more specific archive template

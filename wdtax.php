@@ -34,6 +34,8 @@ function wdtax_init_taxonomies( ) {
 		wdtax_admin_notice( 'notice-info', $message );
 		return;
   }
+  // we don't need 'rels' any more and so for convenience of iterating through
+  // keys that we do need:
 	unset($options_arr['rels']);
   $rels = array_keys( $options_arr );
   foreach ( $rels as $rel ) {
