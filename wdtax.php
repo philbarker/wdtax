@@ -59,20 +59,3 @@ function wdtax_init_taxonomies( ) {
 		return $t_arr;
 	}
 }
-
-function custom_rewrite_basic() {
-  //this will only work on books.home.local.site
-  //need to create index page in plugin
-  //need to find/set page_id automagically
-  /*$postarr = array (
-    'ID' => 9999,
-    'post_content' => '[wdtax_terms custom_taxonomy=all]',
-    'post_title' => 'entities',
-    'post_status' => 'publish',
-    'post_type' => 'post'
-  );
-  wp_insert_post( $postarr, True );*/
-  add_rewrite_rule('^mentions-term/?$', 'index.php?page_id=9999', 'top');
-  add_rewrite_rule('^entities/?$', 'index.php?page_id=9999', 'top');
-}
-add_action('init', 'custom_rewrite_basic');
