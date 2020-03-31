@@ -60,26 +60,77 @@ function wdtax_admin_notice( $class, $msg ) {
 }
 
 function wdtax_list_terms( $atts ) {
-// creates a shortcode wdtax_terms that requires one parameter custom_taxonomy,
-// and which will list all the terms in that custom taxonomy.
-// To use this shortcode drag and drop a Text widget into your sidebar.
-// Add this shortcode in your Widget and save.
-// [wdtax_terms custom_taxonomy=customtaxonomyname]
-// based on http://www.wpbeginner.com/plugins/how-to-display-custom-taxonomy-terms-in-wordpress-sidebar-widgets/
-// we extract custom taxonomy parameter of our shortcode
+  // creates a shortcode wdtax_list_terms that requires one parameter
+  // custom_taxonomy, and which will list terms from that custom taxonomy.
+  // use custom_taxonomy = 'all' to list all terms from all taxonomies.
+  // To use this shortcode drag and drop a Text widget into your sidebar.
+  // Add this shortcode in your Widget and save.
+  // [wdtax_list_terms custom_taxonomy='customtaxonomyname']
+  global $wdtax_taxonomies;
+  $taxonomy_keys = array_keys($wdtax_taxonomies);
+  $tax_arr = array();
+  foreach ($taxonomy_keys as $key) {
+    $tax_arr[$key] = $wdtax_taxonomies[ $key ]->id;
+  }
   extract( shortcode_atts( array( 'custom_taxonomy' => '', ), $atts ) );
-  $args = array(
-    'taxonomy' => $custom_taxonomy,
-    'title_li' => '',
-    'echo' => false
-  );
-  $widgettext = '<ul>'.wp_list_categories($args).'</ul>';
-  return $widgettext;
+  // if $custom_taxonomy = all then print terms from all Taxonomies
+  if ( 'all' === $custom_taxonomy ) {
+    $args = array (
+        'taxonomy' => $tax_arr,
+        'orderby' => 'name',
+        'order' => 'ASC',
+      );
+    wdtax_print_terms( $args );
+    return;
+  } elseif ( in_array( $custom_taxonomy, array_keys($tax_arr) ) ) {
+  // else check that $custom_taxonomy is a name of an existing taxonomy
+    // if so, print out terms from that taxonomy
+    $args = array (
+        'taxonomy' => $tax_arr[$custom_taxonomy],
+        'orderby' => 'name',
+        'order' => 'ASC',
+      );
+    wdtax_print_terms( $args );
+    return;
+  } else {
+    echo $custom_taxonomy.' is not a valid taxonomy name.';
+    $result = '<p><strong>Usage:</strong> <br />
+               [wdtax_widget_terms custom_taxonomy=customtaxonomyname]</p>
+               <p><strong>Known taxonomies are: </strong> all';
+    foreach ( array_keys($tax_arr) as $taxonomy ) {
+      $result = $result.', '.$taxonomy;
+    }
+    return $result;
+  }
 }
 add_shortcode( 'wdtax_terms', 'wdtax_list_terms' );
-add_filter('widget_text', 'do_shortcode');
 
-function wdtax_post_terms( $atts ) {
+function wdtax_print_terms( $args ) {
+  $terms = get_terms( $args );
+  echo '<ul>';
+  foreach ( $terms as $term ) {
+    $url = get_term_link( $term );
+    $term_id =  $term->term_id ;
+    $class = get_term_meta( $term_id, 'schema_type', true );
+    echo '<li class="'.$class.'"><a href="'.$url.'">'.$term->name.'</a> '.$term->description.'</li>';
+  }
+  echo '<ul>';
+}
+
+function wdtax_get_the_term_list( $atts ) {
+// Returns an HTML string of taxonomy terms associated with a post and 
+// wdtax taxonomy. Terms are linked to their respective term listing pages.
+  extract( shortcode_atts( array( 'custom_taxonomy' => '', ), $atts ) );
+  $id = get_the_ID();
+  $tax_arr = get_taxonomies(  );
+  if ( array_key_exists( $custom_taxonomy, $tax_arr ) ) {
+    $post_terms = get_the_term_list($id, $custom_taxonomy, ' ', ' ', ' ');
+  } else {
+    $post_terms = __('Taxonomy does not exist: ', 'wdtax').$custom_taxonomy;
+  }
+  return $post_terms;
+}
+add_shortcode( 'wdtax_post_terms', 'wdtax_get_the_term_list' );
 // creates a shortcode wdtax_post_terms that requires one parameter
 // custom_taxonomy, and which will list terms from that custom taxonomy with
 // which the current  post has been tagged.
@@ -87,17 +138,8 @@ function wdtax_post_terms( $atts ) {
 // Add this shortcode in your Widget and save.
 // [wdtax_post_terms custom_taxonomy=customtaxonomyname]
 // based on http://www.wpbeginner.com/plugins/how-to-display-custom-taxonomy-terms-in-wordpress-sidebar-widgets/
-  extract( shortcode_atts( array( 'custom_taxonomy' => '', ), $atts ) );
-  $id = get_the_ID();
-  $tax_arr = get_taxonomies(  );
-  if ( array_key_exists( $custom_taxonomy, $tax_arr ) ) {
-    $widgettext = get_the_term_list($id, $custom_taxonomy, ' ', ' ', ' ');
-  } else {
-    $widgettext = __('Taxonomy does not exist: ', 'wdtax').$custom_taxonomy;
-  }
-  return $widgettext;
-}
-add_shortcode( 'wdtax_post_terms', 'wdtax_post_terms' );
+
+
 
 /***
  * Functions for taxonomy archive pages
@@ -109,7 +151,7 @@ function wdtax_archive_page_header( $term_id ) {
   $wdtax_taxonomy = $wdtax_taxonomies[$wdtax_rel];
   $type = get_term_meta( $term_id, 'schema_type', True );
   echo '<h1 class="page-title">Index: ';
-  echo $wdtax_taxonomy->schema_text( $term_id, 'wd_name' );
+  echo $wdtax_taxonomy->schema_text( $term_id, 'name' );
   echo '</h1>';
   echo '<div class="taxonomy-description  wdtax-clearfix" > ';
   wdtax_archive_page_image( $term_id );
@@ -126,7 +168,7 @@ function wdtax_archive_page_header( $term_id ) {
   } elseif ('Event' === $type ) {
    echo $wdtax_taxonomy->schema_event_details( $term_id );
   } else {
-   echo $wdtax_taxonomy->schema_text($term_id, 'wd_description');
+   echo $wdtax_taxonomy->schema_text($term_id, 'description');
   }
   echo '</div>';
   echo $wdtax_taxonomy->schema_sameas_all( $term_id );

@@ -1,7 +1,7 @@
 <?php
 /*
  * Package Name: wdtax
- * Description: class and mehtods for custom taxonomies & their metadata
+ * Description: class and methods for custom taxonomies & their metadata
  * Version: 0
  * Author: Phil Barker
  * Author URI: http://people.pjjk.net/phil
@@ -12,28 +12,84 @@ defined( 'ABSPATH' ) or die( 'Be good. If you can\'t be good be careful' );
 
 class wdtax_taxonomy {
  /* class for creating custom taxonomies with admin menus that can take
-  * data from wikidata and can be used to provide linked data with schema.org
-  * properties such as schema:about, scheam:mentions...
+    data from wikidata and can be used to provide linked data with schema.org
+    properties such as schema:about, scheam:mentions...
   *
   * After instatiating, the init  method should be called to
-  * hook various functions to init and admin_init.
+    hook various functions to init and admin_init.
   *
-  * methods
-  * init() : hooks into various init actions
+  properties
+  * $id : id of the taxonomy
+  * $type : types of post to which taxonomy applies
+  * $args : argument array of taxonomy
+  * $property_map: map $taxonomy metadata property names to
+                   keys in wdtax_wikidata->properties array, human labels,
+                   and schema.org property names.
+  * $type_map : map from wikidata classes to schema.org types
+  * $<sdotype>_property_types, <sdotype> = generic, person, organization, book,
+                                           creative_work, place, event
+              : array of known properties for each schema.org type.
+
+  methods
+  * __construct($taxonomy, $type, $s_name='', $p_name='')
+  *           $taxonomy = id of taxonomy, $type = types of post to attach it to
+              $s_name & $p_name = singluar and plural names, used for labels
+                                  and in description.
+  *           $s_name and $p_name will default to $taxonomy and $taxonomy.'s'
+           : sets up a taxonomy, essentially created the args() array used to
+             register the taxonomy. Must call init to register it.
+  * init() : registers the taxonomy & hooks into various init actions to set up
+             forms for editing taxonomy terms.
+             Must be called after __construct()
   * register_wdtaxonomy() : registers the taxonomy (called by init)
-  * add_form_fields() : fields for add new term form (called by admin_init)
-  * edit_form_fields( $wd_term ) : fields for edit term form (called by
-  *     admin_init)
-  * save_meta() : saves term metadata (called by admin_init)
-  * fetch_store_wikidata( $term ) : gets and stores wikidata for
-  *           $term in the taxonomy
+  * add_form_fields() : fields for add new term form (hooked to admin_init)
+  * edit_form_fields( $wd_term ) : fields for edit term form (hooked to
+        admin_init)
+  * save_meta() : saves term metadata (hooked to by admin_init)
+  * fetch_store_wikidata( $term ) : gets and stores data from wikidata for
+              $term in the taxonomy
+  * schema_text( $term_id, $p, $args=array() )
+          : echo property $p of a term as schema markup for property to which
+            $p maps in $property_map, in html tag $args['tag'] or span as
+            default, with text $args['before'|'after'] before or after $p.
+            $args['class'] can be used for @class of html element
+  * list_all_schema( $term_id )
+          : lists all metadata for term mapped against schema properties using
+            $property_map
+  * schema_birth_details ( $term_id ) return birth date & place with schema.org
+            markup
+  * schema_death_details ( $term_id ) return death date & place  with schema.org
+            markup
+  * schema_person_details ( $term_id ) return description, birth and death
+            details with schema.org markup
+  * schema_sameas_wd ( $term_id ),
+  * schema_sameas_viaf ( $term_id ),
+  * schema_sameas_isni ( $term_id ),
+  * schema_sameas_geoname ( $term_id ) : return relevant identifier marked up
+            as schema.org sameAs, returns empty string if that id does not exist
+  * schema_sameas_all ( $term_id ) : return string of all external identifiers
+            marked up as schema.org sameAs.
+  * schema_author ( $term_id ) : return 'by <wd_author>' if taxon has property
+             <wd_author>, else returns empty string.
+  * schema_creator ( $term_id ) : return 'by <wd_creator>' if taxon has property
+             <wd_creator>, else returns empty string.
+  * schema_country( $term_id )
+  * schema_publication_date( $term_id )
+  * schema_book_details( $term_id )
+  * schema_creativework_details( $term_id )
+  * schema_place_details( $term_id )
+  * schema_event_details( $term_id )
+  * schema_organization_details( $term_id )
+  * schema_image( $term_id )
+  * schema_thumbnail( $term_id )
   */
-  protected $id;     //id of the taxonomy
-  protected $type;   //types of post to which taxonomy apllies
-  protected $args;   //argument array of taxonomy
-  //next: keys used for storing wikidata properties as term metadata mapped
-  //to key in $taxonomy->properties array, human label, schema id
+  public $id;     //id of the taxonomy
+  public $type;   //types of post to which taxonomy apllies
+  public $args;   //argument array of taxonomy
   public $property_map = array(
+    // taxonomy term metadata name mapped to
+    // key in wdtax_wikidata->properties array, human label, schema property
+    // note: wdtax_ would be better prefix than wd_
     'wd_id' => ['id', 'Wikidata ID', 'sameAs'],
     'wd_description' => ['description', 'Description', 'description'],
     'wd_name' => ['label', 'Name', 'name'],
@@ -56,7 +112,9 @@ class wdtax_taxonomy {
     'wd_place_country'=> ['p_country', 'In country', 'containedInPlace'],
     'wd_inception'=> ['inception', 'Founded', 'foundingDate'],
     'wd_dissolution'=> ['dissolution', 'Dissolution', 'dissolutionDate'],
-    'wd_geoname' => ['geoname', 'GeoNames ID', 'sameAs']
+    'wd_geoname' => ['geoname', 'GeoNames ID', 'sameAs'],
+    'wd_other_id' => ['', 'Other ID (URL)', 'sameAs'],
+    'schema_type' => ['', 'schema.org type', '@typeOf']
   );
   // $type map maps wikidata class labels to schema Types, most specific first
   public $type_map = array(
@@ -190,7 +248,9 @@ class wdtax_taxonomy {
 	  );
   }
   function init() {
-    /*hooks into various init action*/
+    /* Registers the taxonomy and hooks into various init actions to
+     * create forms associated with editing taxonomy terms.
+     */
     //first, register the taxonomy on init
     add_action( 'init', array( $this, 'register_wdtaxonomy') );
     //add fields to add term form
@@ -226,6 +286,25 @@ class wdtax_taxonomy {
           <label for="wd_id"><?php _e( 'Wikidata ID', 'wdtax' ); ?></label>
           <input type="text" id="wd_id" name="wd_id" />
       </div>
+      <div class="form-field term-group">
+          <label for="wd_other_id"><?php _e( 'Other ID (URL)', 'wdtax' ); ?>
+          </label>
+          <input type="text" id="wd_other_id" name="wd_other_id" />
+      </div>
+      <div class="form-field term-group">
+          <label for="schema_type"><?php _e( 'Schema.org Type', 'wdtax' ); ?>
+          </label>
+          <select id="schema_type" name="schema_type" >
+            <?php
+            foreach ( array_unique( array_values( $this->type_map ) ) as $type ) {
+              $selected = selected( $type, 'Thing', false);
+              echo "<option value={$type} {$selected}>{$type}</option>";
+            }
+            ?>
+          </select>
+          <p>This may be overridden by a value inferred from wikidata.<br />
+             Only listed schema.org types can be handled.</p>
+      </div>
       <?php
   }
   function edit_form_fields( $term, $taxonomy ) {
@@ -236,7 +315,9 @@ class wdtax_taxonomy {
     $wd_id = ucfirst( get_term_meta( $term_id, 'wd_id', true ) );
     $wd_name = get_term_meta( $term_id, 'wd_name', true );
     $wd_description = get_term_meta( $term_id, 'wd_description', true );
-    $term_meta = get_term_meta( $term->term_id );
+    $wd_other_id = get_term_meta( $term_id, 'wd_other_id', true );
+    $schema_type = get_term_meta( $term_id, 'schema_type', true );
+    $term_meta = get_term_meta( $term_id );
     ?>
     <tr class="form-field term-group-wrap">
         <th scope="row">
@@ -244,8 +325,41 @@ class wdtax_taxonomy {
         </th>
         <td>
             <input type="text" id="wd_id"  name="wd_id"
-            	   value="<?php echo ucfirst($wd_id); ?>" />
+            	   value="<?php echo( $wd_id ); ?>" />
         </td>
+    </tr>
+    <tr class="form-field term-group-wrap">
+        <th scope="row">
+            <label for="wd_other_id"><?php _e( 'Other ID (URL)', 'wdtax' ); ?>
+            </label>
+        </th>
+        <td>
+            <input type="text" id="wd_other_id"  name="wd_other_id"
+            	   value="<?php echo( esc_url( $wd_other_id ) ); ?>" />
+        </td>
+    </tr>
+    <div class="form-field term-group">
+    </div>
+
+    <tr class="form-field term-group-wrap">
+      <th scope="row">
+        <label for="schema_type"><?php _e( 'Schema.org Type', 'wdtax' ); ?>
+        </label>
+      </th>
+      <td>
+        <select id="schema_type" name="schema_type" >
+          <?php
+          foreach ( array_unique( array_values( $this->type_map ) ) as $type ) {
+            $selected = selected( $type, $schema_type, false);
+            echo "<option value={$type} {$selected}>{$type}</option>";
+          }
+          ?>
+        </select>
+        <p class="description">
+          This may be overridden by a value inferred from wikidata.<br />
+          Only listed schema.org types can be handled.
+        </p>
+      </td>
     </tr>
     <tr class="form-field term-group-wrap">
         <th scope="row">
@@ -253,11 +367,17 @@ class wdtax_taxonomy {
         </th>
         <td>
           <?php
-          foreach ( array_keys( $term_meta ) as $key ) {
-            print_r( '<b>'.$key.': </b>');
-            print_r($term_meta[$key][0]);
-            print_r( '<br />' );
-            unset( $key );
+          // print any term_meta that is set and for which the key maps to
+          // a wikidata property
+          foreach ( array_keys( $this->property_map ) as $key ) {
+            if ( ( '' !== $this->property_map[$key][0] )
+                   && isset($term_meta[$key][0] )
+              ) {
+              print_r( '<b>'.$key.': </b>');
+              print_r($term_meta[$key][0]);
+              print_r( '<br />' );
+              unset( $key );
+            }
           }
            ?>
         </td>
@@ -284,25 +404,42 @@ class wdtax_taxonomy {
      * & store as term metadata
      * hooked in to {$taxonomy}_create_term
      */
+     if( isset( $_POST['wd_other_id'] ) ) {
+       $wd_other_id = esc_url( $_POST['wd_other_id'] );
+       add_term_meta( $term_id, 'wd_other_id', $wd_other_id);
+     }
+     if( isset( $_POST['schema_type'] ) ) {
+       $schema_type = esc_attr( $_POST['schema_type'] );
+       add_term_meta( $term_id, 'schema_type', $schema_type);
+     }
     if( isset( $_POST['wd_id'] ) ) {
       $wd_id = ucfirst( esc_attr( $_POST['wd_id'] ) );
       $this->fetch_store_wikidata( $wd_id, $term_id );
     }
   }
   function on_edit_term( $term_id ) {
-   /*Hooked into edit term for this taxonomy.
-    *Don't save metadata that comes from wikidata when term is editted
-    *It is fetched and saved on pre-loading the term edit form, and then
-    *edit form is reloaded on update.
-    *If you do save metadata from wikidata here, it will call the edit term
-    *events, including this method. Which would then call the edit term
-    *events, including this method. Which would then call the edit term
-    *events, including this method. Which would then call the edit term
-    *events, including this method. Which would then call the edit term
+   /* Hooked into edit term for this taxonomy.
+    * Don't save term data that comes from wikidata when term is editted
+    * It is fetched and saved on pre-loading the term edit form, and then
+    * edit form is reloaded on update.
+    * If you do save term data here,  it will call the edit term events,
+    * including this method. Which would then call the edit term events,
+    * including this method. Which would then call the edit term events,
+    * including this method. Which would then call the edit term events,
     */
-    if( isset( $_POST['wd_id'] ) ) {
+    if( isset( $_POST['wd_other_id'] ) && ( '' != $_POST['wd_other_id'] ) ) {
+      $wd_other_id = esc_url( $_POST['wd_other_id'] );
+      update_term_meta( $term_id, 'wd_other_id', $wd_other_id);
+    }
+    if( isset( $_POST['wd_id'] ) && ( '' != $_POST['wd_id'] ) ) {
       $wd_id = ucfirst( esc_attr($_POST['wd_id']) );
       update_term_meta( $term_id, 'wd_id', $wd_id);
+    } else {
+      $this->delete_term_wikidata( $term_id );
+    }
+    if( isset( $_POST['schema_type'] )  && ( '' != $_POST['schema_type'] ) ) {
+      $schema_type = ucfirst( esc_attr($_POST['schema_type']) );
+      update_term_meta( $term_id, 'schema_type', $schema_type);
     }
   }
   function pre_edit_form( $term ) {
@@ -314,24 +451,33 @@ class wdtax_taxonomy {
   	$term_id = $term->term_id;
     $wd_id = ucfirst( get_term_meta( $term_id, 'wd_id', true ) );
    	$args = array();
-    if( isset( $wd_id ) ) {
+    if( isset( $wd_id ) && ( '' !== $wd_id ) ) {
       $this->fetch_store_wikidata( $wd_id, $term_id );
     }
   }
-  function delete_term_metadata( $term_id ) {
-    foreach ( array_keys( get_term_meta( $term_id ) ) as $key ) {
-      delete_term_meta( $term_id, $key );
-      unset( $key );
+  function delete_term_wikidata( $term_id ) {
+  // delete the term metadata for each of the keys in property_map if there
+  // is a wikidata property mapped to it
+    foreach ( array_keys( $this->property_map ) as $key ) {
+      if ( '' !== $this->property_map[$key][0] ) {
+        delete_term_meta( $term_id, $key );
+        unset( $key );
+      }
     }
     return;
   }
   function fetch_store_wikidata( $wd_id, $term_id ) {
-   // will fetch wikidata for $wd_id, which should be wikidata identifier (Q#)
-   // and will store relevant data as proerties/metadata for taxonomy term
-   //
+  // will fetch wikidata for $wd_id, which should be wikidata identifier (Q#)
+  // and will store relevant data as proerties/metadata for taxonomy term
+  // First get generic wikidata, which includes wikidata class type, then use
+  // this info to get more specific data for that typy
+  //
+    if ( ( '' == $wd_id ) || ('Q' !== $wd_id[0] ) ) {
+      return;  // Do nothing if $wd_id is not a wikidata term id
+    }
     $p_map = $this->property_map;
     $types = $this->generic_property_types;
-    $this->delete_term_metadata( $term_id );
+    $this->delete_term_wikidata( $term_id );
     $wd = new wdtax_generic_wikidata( $wd_id, $types );
     $wd->store_term_data( $term_id, $this->id ); //update term name and descr
     $wd->set_known_wd_type( $this->type_map );
@@ -357,19 +503,19 @@ class wdtax_taxonomy {
       $wd = new wdtax_wikidata( $wd_id, $types, $where );
       update_term_meta( $term_id, 'schema_type',  'Person' );
     } elseif (  'Organization' === $this->type_map[ $wd_type ] ) {
-        $types = $this->organization_property_types;
-        $where = "wd:{$wd_id} rdfs:label ?label .
-                  wd:{$wd_id} schema:description ?description .
-                  OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
-                  OPTIONAL { wd:{$wd_id} wdt:P571 ?inception }
-                  OPTIONAL { wd:{$wd_id} wdt:P576 ?dissolution }
-                  OPTIONAL { wd:{$wd_id} wdt:P17 ?country }
-                  OPTIONAL { wd:{$wd_id} wdt:P159 ?place .
-                             ?place wdt:P17 ?country }
-                  OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }
-                  OPTIONAL { wd:{$wd_id} wdt:P213 ?isni }";
-        $wd = new wdtax_wikidata( $wd_id, $types, $where );
-        update_term_meta( $term_id, 'schema_type',  'Organization' );
+      $types = $this->organization_property_types;
+      $where = "wd:{$wd_id} rdfs:label ?label .
+                wd:{$wd_id} schema:description ?description .
+                OPTIONAL { wd:{$wd_id} wdt:P31 ?type }
+                OPTIONAL { wd:{$wd_id} wdt:P571 ?inception }
+                OPTIONAL { wd:{$wd_id} wdt:P576 ?dissolution }
+                OPTIONAL { wd:{$wd_id} wdt:P17 ?country }
+                OPTIONAL { wd:{$wd_id} wdt:P159 ?place .
+                           ?place wdt:P17 ?country }
+                OPTIONAL { wd:{$wd_id} wdt:P214 ?viaf }
+                OPTIONAL { wd:{$wd_id} wdt:P213 ?isni }";
+      $wd = new wdtax_wikidata( $wd_id, $types, $where );
+      update_term_meta( $term_id, 'schema_type',  'Organization' );
     } elseif ( 'Book' === $this->type_map[ $wd_type ] ) {
       $types = $this->book_property_types;
       $where = "wd:{$wd_id} rdfs:label ?label .
@@ -451,8 +597,18 @@ class wdtax_taxonomy {
     } else {
       $after = '';
     }
-    $property_value = get_term_meta( $term_id, $p, true );
-    $schema_property = $this->property_map[$p][2];
+    if ( 'name' === $p ) {
+      $term = get_term( $term_id );
+      $property_value = $term->name;
+      $schema_property = 'name';
+    } elseif ( 'description' === $p ) {
+      $term = get_term( $term_id );
+      $property_value = $term->description;
+      $schema_property = 'description';
+    } else {
+      $property_value = get_term_meta( $term_id, $p, true );
+      $schema_property = $this->property_map[$p][2];
+    }
     if ( 'meta' == $tag ) {
       if (  isset( $schema_property ) ) {
         $opentag = "<meta property=\"{$schema_property}\" content=\"";
@@ -542,7 +698,7 @@ class wdtax_taxonomy {
   }
   function schema_person_details ( $term_id ) {
     $args = array('after'=>'. ');
-    $descr = $this->schema_text( $term_id, 'wd_description', $args);
+    $descr = $this->schema_text( $term_id, 'description', $args);
     $birth =  $this->schema_birth_details( $term_id );
     $death = $this->schema_death_details( $term_id );
     return $descr.$birth.$death;
@@ -599,12 +755,24 @@ class wdtax_taxonomy {
       return '';
     }
   }
+  function schema_sameas_other_id( $term_id ) {
+    $term_meta = get_term_meta( $term_id );
+    if ( isset( $term_meta['wd_other_id'] ) ) {
+      $args = array(
+        'tag'=>'link',
+      );
+      return $this->schema_text( $term_id, 'wd_other_id', $args );
+    } else {
+      return '';
+    }
+  }
   function schema_sameas_all( $term_id ) {
     $wd = $this->schema_sameas_wd( $term_id );
     $isni = $this->schema_sameas_isni( $term_id );
     $viaf = $this->schema_sameas_viaf( $term_id );
     $geoname = $this->schema_sameas_geoname( $term_id );
-    return $wd.$isni.$viaf.$geoname;
+    $other_id = $this->schema_sameas_other_id( $term_id );
+    return $wd.$isni.$viaf.$geoname.$other_id;
   }
   function schema_author( $term_id ) {
     $term_meta = get_term_meta( $term_id );
@@ -639,37 +807,58 @@ class wdtax_taxonomy {
     }
   }
   function schema_book_details( $term_id ) {
-    $auth = $this->schema_author( $term_id );
-    $publ = $this->schema_publication_date( $term_id );
-    return 'Book '.$auth.$publ.'. ';
+    if ( isset( get_term_meta($term_id)->wd_id ) )  {
+      $auth = $this->schema_author( $term_id );
+      $publ = $this->schema_publication_date( $term_id );
+      return 'Book '.$auth.$publ.'. ';
+    } else {
+      return $this->schema_text( $term_id, 'description' );
+    }
   }
   function schema_creativework_details( $term_id ) {
-    $type = ' A '.get_term_meta( $term_id, 'wd_type', True );
-    $creator = $this->schema_creator( $term_id );
-    return $type.$creator;
+    if ( isset( get_term_meta($term_id)->wd_id ) )  {
+      $type = ' A '.get_term_meta( $term_id, 'wd_type', True );
+      $creator = $this->schema_creator( $term_id );
+      return $type.$creator;
+    } else {
+      return $this->schema_text( $term_id, 'description' );
+    }
   }
   function schema_place_details( $term_id ) {
-    $descr = $this->schema_text( $term_id, 'wd_description' );
-    $type = ' A '.get_term_meta( $term_id, 'wd_type', True );
-    $country = $this->schema_country( $term_id );
+    $descr = $this->schema_text( $term_id, 'description' );
+    if ( isset( get_term_meta($term_id)->wd_id ) )  {
+      $type = ' A '.get_term_meta( $term_id, 'wd_type', True );
+      $country = $this->schema_country( $term_id );
+    } else {
+      $type = '';
+      $country = '';
+    }
     return $descr.'.'.$type.$country;
   }
   function schema_event_details( $term_id ) {
-    $type = ' A '.get_term_meta( $term_id, 'wd_type', True );
-    $date = ' which happened in '.$this->schema_text( $term_id, 'wd_date' );
-    $place = ' at '.$this->schema_text( $term_id, 'wd_place' );
-    $country = $this->schema_text( $term_id, 'wd_country' );
-    return $type.$date.$place.''.$country;
+    if ( isset( get_term_meta($term_id)->wd_id ) )  {
+      $type = ' A '.get_term_meta( $term_id, 'wd_type', True );
+      $date = ' which happened in '.$this->schema_text( $term_id, 'wd_date' );
+      $place = ' at '.$this->schema_text( $term_id, 'wd_place' );
+      $country = $this->schema_text( $term_id, 'wd_country' );
+      return $type.$date.$place.''.$country;
+    } else {
+      return $this->schema_text( $term_id, 'description' );
+    }
   }
   function schema_organization_details( $term_id ) {
-    $descr = $this->schema_text( $term_id, 'wd_description' );
-    $country = 'Location or headquarters'.
-                $this->schema_text( $term_id, 'wd_country' );
-    $founded = ' founded '.$this->schema_text( $term_id, 'wd_inception' );
-    $dissolved = ' dissolved '.$this->schema_text( $term_id, 'wd_dissolution' );
-    $text = ' located or headquarters in ';
-    $country = $this->schema_text( $term_id, 'wd_country' );
-    return $descr.$founded.$dissolved.$text.$country;
+    $descr = $this->schema_text( $term_id, 'description' );
+    if ( isset( get_term_meta($term_id)->wd_id ) )  {
+      $country = 'Location or headquarters'.
+                  $this->schema_text( $term_id, 'wd_country' );
+      $founded = ' founded '.$this->schema_text( $term_id, 'wd_inception' );
+      $dissolved = ' dissolved '.$this->schema_text( $term_id, 'wd_dissolution' );
+      $text = ' located or headquarters in ';
+      $country = $this->schema_text( $term_id, 'wd_country' );
+      return $descr.$founded.$dissolved.$text.$country;
+    } else {
+      return $descr;
+    }
   }
   function schema_image( $term_id ) {
     $term_meta = get_term_meta( $term_id );
@@ -687,8 +876,6 @@ class wdtax_taxonomy {
     $term_meta = get_term_meta( $term_id );
     if ( isset( $term_meta['wd_image'] ) ) {
       $wd_image = $term_meta['wd_image'];
-
     }
-
   }
 }

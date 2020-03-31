@@ -19,6 +19,9 @@ include_once( $wdtax_dir.'inc/display_functions.php' );
 $wdtax_taxonomies = wdtax_init_taxonomies( );
 
 function wdtax_init_taxonomies( ) {
+ 	//reads wdtax_options, and returns an array of taxonomies, one for each
+	//relationship, by calling wdtax_taxonomy->init() [see inc/taxonomy_class.php]
+	//with options from wdtax_options.
 	$t_arr = array();  // will be an array of taxonomies
 	$options_arr = get_option( 'wdtax_options' );
 	//'rels' elmt is array of taxonomy relationships (an index if you like)
@@ -31,6 +34,8 @@ function wdtax_init_taxonomies( ) {
 		wdtax_admin_notice( 'notice-info', $message );
 		return;
   }
+  // we don't need 'rels' any more and so for convenience of iterating through
+  // keys that we do need:
 	unset($options_arr['rels']);
   $rels = array_keys( $options_arr );
   foreach ( $rels as $rel ) {
