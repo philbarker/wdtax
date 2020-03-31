@@ -202,16 +202,43 @@ function wdtax_archive_page_image( $term_id ) {
  * Functions for on page indexes
  */
 function wdtax_list_the_terms( ) {
+  global $wdtax_taxonomies;
   $options_arr = get_option( 'wdtax_options' );
-  if ( isset( $options_arr['rels'] ) ) {
-    foreach ( $options_arr['rels'] as $rel ) {
-      echo $rel.':<br/>';
-      $atts = array( 'custom_taxonomy'=>'wdtax_'.$rel );
-      $terms = wdtax_get_the_term_list( $atts );
-      echo($terms).'<br/>';
+  if ( !isset( $options_arr['rels'] ) ) {
+    die('wdtax plugin does not seem have any taxonomies set up');
+  }
+  $id = get_the_ID();
+  $tax_arr = get_taxonomies(  );
+  foreach ( $options_arr['rels'] as $rel ) {
+    $custom_taxonomy = 'wdtax_'.$rel;
+    if ( array_key_exists( $custom_taxonomy, $tax_arr ) ) {
+      $wdtax_taxonomy = $wdtax_taxonomies[$rel];
+      $post_terms = get_the_terms( $id, $custom_taxonomy );
+      if ( $post_terms ) {
+        echo '<h4 class="wdtax-relation">'.$rel.'</h4>';
+        echo '<ul class="wdtax-terms" vocab="http://schema.org/">';
+        foreach ( $post_terms as $term ) {
+          $term_id = $term->term_id;
+          $schema_name = $wdtax_taxonomy->schema_text( $term_id, 'name' );
+          $args['tag'] = 'meta';
+          $schema_type = $wdtax_taxonomy->schema_text( $term_id, 'schema_type', $args );
+          $schema_id = $wdtax_taxonomy->schema_text( $term_id, 'wd_id', $args );
+          $index_url = site_url().'/'.$rel.'-term/'.$term->slug.'/';
+          echo '<li class="wdtax-term">' ;
+          echo '<a rel="'.$rel.'" href="'.$index_url.'">' ;
+          echo $schema_type;
+          echo $schema_id;
+          echo $schema_name;
+          echo '</a></li>';
+        }
+        echo '</ul>';
+      } else { //no post terms in relevant taxonomy
+        ;
+      }
+    } else { // relevant taxonomy not found
+      echo '<p>No taxonomy found for the relationship'.$rel;
+      echo ', which is odd.</p>';
     }
-  } else {
-    echo('No index terms: wdtax plugin is not active.');
   }
 }
 ?>
