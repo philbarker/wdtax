@@ -117,14 +117,9 @@ function wdtax_print_terms( $args ) {
   echo '<ul>';
 }
 
-function wdtax_list_post_terms( $atts ) {
-// creates a shortcode wdtax_post_terms that requires one parameter
-// custom_taxonomy, and which will list terms from that custom taxonomy with
-// which the current  post has been tagged.
-// To use this shortcode drag and drop a Text widget into your sidebar.
-// Add this shortcode in your Widget and save.
-// [wdtax_post_terms custom_taxonomy=customtaxonomyname]
-// based on http://www.wpbeginner.com/plugins/how-to-display-custom-taxonomy-terms-in-wordpress-sidebar-widgets/
+function wdtax_get_the_term_list( $atts ) {
+// Returns an HTML string of taxonomy terms associated with a post and 
+// wdtax taxonomy. Terms are linked to their respective term listing pages.
   extract( shortcode_atts( array( 'custom_taxonomy' => '', ), $atts ) );
   $id = get_the_ID();
   $tax_arr = get_taxonomies(  );
@@ -135,7 +130,16 @@ function wdtax_list_post_terms( $atts ) {
   }
   return $post_terms;
 }
-add_shortcode( 'wdtax_post_terms', 'wdtax_list_post_terms' );
+add_shortcode( 'wdtax_post_terms', 'wdtax_get_the_term_list' );
+// creates a shortcode wdtax_post_terms that requires one parameter
+// custom_taxonomy, and which will list terms from that custom taxonomy with
+// which the current  post has been tagged.
+// To use this shortcode drag and drop a Text widget into your sidebar.
+// Add this shortcode in your Widget and save.
+// [wdtax_post_terms custom_taxonomy=customtaxonomyname]
+// based on http://www.wpbeginner.com/plugins/how-to-display-custom-taxonomy-terms-in-wordpress-sidebar-widgets/
+
+
 
 /***
  * Functions for taxonomy archive pages
