@@ -114,7 +114,7 @@ class wdtax_taxonomy {
     'wd_dissolution'=> ['dissolution', 'Dissolution', 'dissolutionDate'],
     'wd_geoname' => ['geoname', 'GeoNames ID', 'sameAs'],
     'wd_other_id' => ['', 'Other ID (URL)', 'sameAs'],
-    'schema_type' => ['', 'schema.org type', '@typeOf']
+    'schema_type' => ['', 'schema.org type', 'typeof']
   );
   // $type map maps wikidata class labels to schema Types, most specific first
   public $type_map = array(
