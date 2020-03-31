@@ -118,7 +118,7 @@ function wdtax_print_terms( $args ) {
 }
 
 function wdtax_get_the_term_list( $atts ) {
-// Returns an HTML string of taxonomy terms associated with a post and 
+// Returns an HTML string of taxonomy terms associated with a post and
 // wdtax taxonomy. Terms are linked to their respective term listing pages.
   extract( shortcode_atts( array( 'custom_taxonomy' => '', ), $atts ) );
   $id = get_the_ID();
@@ -195,5 +195,23 @@ function wdtax_archive_page_image( $term_id ) {
   $wdtax_rel = str_replace('wdtax_','',$term->taxonomy);
   $wdtax_taxonomy = $wdtax_taxonomies[$wdtax_rel];
   echo $wdtax_taxonomy->schema_image( $term_id );
+}
+
+
+/***
+ * Functions for on page indexes
+ */
+function wdtax_list_the_terms( ) {
+  $options_arr = get_option( 'wdtax_options' );
+  if ( isset( $options_arr['rels'] ) ) {
+    foreach ( $options_arr['rels'] as $rel ) {
+      echo $rel.':<br/>';
+      $atts = array( 'custom_taxonomy'=>'wdtax_'.$rel );
+      $terms = wdtax_get_the_term_list( $atts );
+      echo($terms).'<br/>';
+    }
+  } else {
+    echo('No index terms: wdtax plugin is not active.');
+  }
 }
 ?>
