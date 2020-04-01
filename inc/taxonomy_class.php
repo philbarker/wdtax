@@ -605,6 +605,10 @@ class wdtax_taxonomy {
       $term = get_term( $term_id );
       $property_value = $term->description;
       $schema_property = 'description';
+    } elseif ( 'wd_id' === $p ) {
+      $wd_base = 'https://www.wikidata.org/wiki/';
+      $property_value = $wd_base.get_term_meta( $term_id, $p, true );
+      $schema_property = $this->property_map[$p][2];
     } else {
       $property_value = get_term_meta( $term_id, $p, true );
       $schema_property = $this->property_map[$p][2];
