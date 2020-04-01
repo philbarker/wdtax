@@ -219,16 +219,16 @@ function wdtax_list_the_terms( ) {
         echo '<ul class="wdtax-terms" vocab="http://schema.org/">';
         foreach ( $post_terms as $term ) {
           $term_id = $term->term_id;
-          $schema_name = $wdtax_taxonomy->schema_text( $term_id, 'name' );
+          $term_meta = get_term_meta( $term_id );
+          $meta_schema_name = $wdtax_taxonomy->schema_text( $term_id, 'name' );
+          $schema_type = implode(" ", $term_meta['schema_type']);
           $args['tag'] = 'meta';
-          $schema_type = $wdtax_taxonomy->schema_text( $term_id, 'schema_type', $args );
-          $schema_id = $wdtax_taxonomy->schema_text( $term_id, 'wd_id', $args );
+          $meta_schema_id = $wdtax_taxonomy->schema_text( $term_id, 'wd_id', $args );
           $index_url = site_url().'/'.$rel.'-term/'.$term->slug.'/';
           echo '<li class="wdtax-term">' ;
-          echo '<a rel="'.$rel.'" href="'.$index_url.'">' ;
-          echo $schema_type;
-          echo $schema_id;
-          echo $schema_name;
+          echo '<a rel="'.$rel.'" href="'.$index_url.' " typeof="'.$schema_type.'">' ;
+          echo $meta_schema_id;
+          echo $meta_schema_name;
           echo '</a></li>';
         }
         echo '</ul>';
