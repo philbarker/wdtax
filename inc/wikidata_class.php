@@ -36,6 +36,9 @@ abstract class wdtax_wikidata_basics {
 		$this->properties = array_merge($this->properties, $properties);
 		$this->properties['id'] = $wd_id;
 		$this->fetch_wikidata();
+//    echo("<p>");
+//    print_r( $this->wikidata );
+//    echo("</p>");
 		$this->set_text_property( 'label' );
 		$this->set_text_property( 'description' );
 		$this->set_text_property( 'image' );
@@ -59,6 +62,9 @@ abstract class wdtax_wikidata_basics {
 	}
 	function set_text_property( $p, $label='' ) {
 		if ( !in_array( $p, array_keys( $this->properties ) ) ) {
+//      $msg = __("tried to set ".$p.". Property does not exist",
+//		              'wdtax');
+//		  wdtax_admin_notice( 'notice-info', $message );
 			return false;
 		} else {
 			$tag = $p.$label;
@@ -67,6 +73,9 @@ abstract class wdtax_wikidata_basics {
 			$this->properties[$p] = $this->wikidata->results->bindings[0]->$tag->value;
 			return true;
 		} else {
+//      $msg = __("tried to set ".$p.". Property has no value",
+//		              'wdtax');
+//		  wdtax_admin_notice( 'notice-info', $message );
 			$this->$p = false;
 			return false;
 		}
