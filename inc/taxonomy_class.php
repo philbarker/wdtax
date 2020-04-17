@@ -606,7 +606,7 @@ class wdtax_taxonomy {
       $property_value = $term->description;
       $schema_property = 'description';
     } elseif ( 'wd_id' === $p ) {
-      $wd_base = 'https://www.wikidata.org/wiki/';
+      $wd_base = 'http://www.wikidata.org/wiki/';
       $property_value = $wd_base.get_term_meta( $term_id, $p, true );
       $schema_property = $this->property_map[$p][2];
     } else {
@@ -709,11 +709,9 @@ class wdtax_taxonomy {
   }
   function schema_sameas_wd( $term_id ) {
     $term_meta = get_term_meta( $term_id );
-    $base_url = 'http://www.wikidata.org/entity/';
     if ( isset( $term_meta['wd_id'] ) ) {
       $args = array(
         'tag'=>'link',
-        'before'=>$base_url
       );
       return $this->schema_text( $term_id, 'wd_id', $args );
     } else {
