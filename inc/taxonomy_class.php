@@ -120,6 +120,7 @@ class wdtax_taxonomy {
   public $type_map = array(
     'book' => 'Book',
     'literary work' => 'Book',
+    'biography' => 'Book',
     'creative work' => 'CreativeWork',
     'human' => 'Person',
     'fictional human' => 'Person',
